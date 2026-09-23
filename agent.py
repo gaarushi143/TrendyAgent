@@ -7,7 +7,8 @@ for brand safety, and generates social media posts.
 
 Usage:
     python agent.py --niche "AI and Tech"
-    python agent.py --niche "Fitness" --brand my_brand.md
+    python agent.py --niche "Fitness" --brand acme
+    python agent.py                          # generic top 10 trends, default brand
 
 The pipeline flows in 4 steps:
     1. Read brand guidelines from a markdown file
@@ -26,6 +27,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from tools.enrich import enrich_trend
 from tools.search import search_trending
 from tools.writer import filter_trends, write_posts
 
@@ -33,20 +35,23 @@ from tools.writer import filter_trends, write_posts
 load_dotenv()
 
 
-def load_brand_guidelines(path: str = "brand_guidelines.md") -> str:
+def load_brand_guidelines(name: str = "acme") -> str:
     """
-    Read the brand guidelines markdown file and return its contents as a string.
+    Load brand guidelines by brand name.
 
-    The brand guidelines tell Claude about your brand's tone, audience, and
-    topics to avoid — so the generated posts stay on-brand.
-
-    Args:
-        path: File path to the brand guidelines markdown file.
-
-    Returns:
-        The full text content of the brand guidelines file.
+    Looks for brands/{name}.md first. Falls back to treating the argument
+    as a direct file path for backwards compatibility.
     """
-    return Path(path).read_text()
+    brand_file = Path("brands") / f"{name}.md"
+    if brand_file.exists():
+        return brand_file.read_text()
+    path = Path(name)
+    if path.exists():
+        return path.read_text()
+    print(f"Error: Brand '{name}' not found.")
+    print(f"  Looked for: {brand_file}  and  {path}")
+    print(f"  Available brands: {', '.join(p.stem for p in Path('brands').glob('*.md'))}")
+    sys.exit(1)
 
 
 def save_output(content: str, niche: str) -> str:
@@ -87,8 +92,8 @@ def main():
 
     # --- Step 1: Parse command-line arguments ---
     parser = argparse.ArgumentParser(description="Trend-Jacking Social Monitor")
-    parser.add_argument("--niche", required=True, help='The niche to search trends for (e.g. "AI and Tech")')
-    parser.add_argument("--brand", default="brand_guidelines.md", help="Path to brand guidelines markdown file")
+    parser.add_argument("--niche", default=None, help='The niche to search trends for (e.g. "AI and Tech"). Omit for generic top trends.')
+    parser.add_argument("--brand", default="acme", help='Brand name — loads brands/{name}.md (e.g. "acme")')
     args = parser.parse_args()
 
     # --- Step 2: Validate API keys ---
@@ -104,14 +109,15 @@ def main():
     brand_guidelines = load_brand_guidelines(args.brand)
 
     # --- Step 4: Search for trending topics ---
-    # This calls Serper.dev to find what's trending today in the user's niche
-    print(f"\n🔍 Searching for trending topics in: {args.niche}...")
-    results = search_trending(args.niche)
+    niche = args.niche
+    if niche:
+        print(f"\n🔍 Searching for trending topics in: {niche}...")
+    else:
+        print(f"\n🔍 Searching for today's top trending topics...")
+    results = search_trending(niche)
     if not results:
         print("No trending topics found. Try a different niche.")
         sys.exit(1)
-    # Show the top 10 trending topics in the terminal so the user
-    # can see what the agent found before filtering
     top_results = results[:10]
     print(f"   Found {len(results)} results. Top 10 trending topics:\n")
     for i, r in enumerate(top_results, 1):
@@ -120,13 +126,20 @@ def main():
         print()
 
     # --- Step 5: Filter trends with Claude ---
-    # Claude reads the raw search results and picks the best one that is
-    # relevant to the niche AND safe for the brand
+    niche_label = niche or "General"
     print(f"\n🧠 Filtering for the best brand-safe trend...")
-    trend = filter_trends(results, args.niche, brand_guidelines)
+    trend = filter_trends(results, niche_label, brand_guidelines)
     print(f'   Selected: {trend["trend_title"]}')
 
-    # --- Step 6: Generate social media posts with Claude ---
+    # --- Step 6: Enrich the chosen trend ---
+    print(f"\n🔬 Researching trend in depth...")
+    brief = enrich_trend(trend)
+    trend.update(brief)
+    print(f'   Trajectory: {trend.get("trajectory", "N/A")}')
+    if trend.get("hashtags"):
+        print(f'   Hashtags: {" ".join(trend["hashtags"][:5])}')
+
+    # --- Step 7: Generate social media posts with Claude ---
     # Claude writes 3 posts (Twitter, LinkedIn, Instagram) that tie the
     # trending topic to the brand naturally
     print(f"\n✍️  Drafting social media posts...")
@@ -135,10 +148,16 @@ def main():
     # --- Step 7: Assemble and save the output ---
     # Combine the trend metadata and drafted posts into one markdown file
     output = f"# Trend-Jacking Posts — {date.today().isoformat()}\n\n"
-    output += f"**Niche:** {args.niche}\n\n"
+    output += f"**Niche:** {niche_label}\n\n"
     output += f'**Trend:** {trend["trend_title"]}\n\n'
     output += f'**Source:** {trend["source_url"]}\n\n'
     output += f'**Why this trend:** {trend["reasoning"]}\n\n'
+    output += "## Trend Brief\n\n"
+    output += f'**Core Essence:** {trend.get("core_essence", "N/A")}\n\n'
+    output += f'**Triggering Event(s):** {trend.get("triggering_events", "N/A")}\n\n'
+    output += f'**Trajectory:** {trend.get("trajectory", "N/A")}\n\n'
+    output += f'**Key Phrases:** {", ".join(trend.get("key_phrases", []))}\n\n'
+    output += f'**Related Hashtags:** {" ".join(trend.get("hashtags", []))}\n\n'
     output += "---\n\n"
     output += posts_markdown
 
@@ -152,7 +171,7 @@ def main():
         output += f"   - {r['snippet']}\n"
         output += f"   - [Read more]({r['link']})\n\n"
 
-    filepath = save_output(output, args.niche)
+    filepath = save_output(output, niche_label)
     print(f"\n✅ Done! Posts saved to: {filepath}")
 
 

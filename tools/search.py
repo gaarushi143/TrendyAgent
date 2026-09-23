@@ -25,12 +25,14 @@ from urllib.parse import urlparse
 
 import requests
 
+from tools.trends import get_trending_searches
+
 # Serper.dev API endpoints
 SERPER_SEARCH_URL = "https://google.serper.dev/search"
 SERPER_NEWS_URL = "https://google.serper.dev/news"
 
 
-def _call_serper(endpoint: str, query: str) -> dict:
+def call_serper(endpoint: str, query: str) -> dict:
     """
     Make a single API call to Serper.dev.
 
@@ -61,7 +63,7 @@ def _call_serper(endpoint: str, query: str) -> dict:
     return response.json()
 
 
-def _extract_domain(url: str) -> str:
+def extract_domain(url: str) -> str:
     """
     Extract the domain name from a URL for display purposes.
 
@@ -77,7 +79,7 @@ def _extract_domain(url: str) -> str:
     return domain.removeprefix("www.")
 
 
-def _clean_results(raw_results: list[dict]) -> list[dict]:
+def clean_results(raw_results: list[dict]) -> list[dict]:
     """
     Convert raw Serper API results into a clean, consistent format.
 
@@ -98,12 +100,12 @@ def _clean_results(raw_results: list[dict]) -> list[dict]:
             "title": item.get("title", ""),
             "snippet": item.get("snippet", ""),
             "link": item.get("link", ""),
-            "source": item.get("source", _extract_domain(item.get("link", ""))),
+            "source": item.get("source", extract_domain(item.get("link", ""))),
         })
     return cleaned
 
 
-def _deduplicate(results: list[dict]) -> list[dict]:
+def deduplicate(results: list[dict]) -> list[dict]:
     """
     Remove duplicate results based on URL.
 
@@ -125,57 +127,51 @@ def _deduplicate(results: list[dict]) -> list[dict]:
     return unique
 
 
-def search_trending(niche: str) -> list[dict]:
+def search_trending(niche: str = None) -> list[dict]:
     """
-    Search the web for today's trending topics in a given niche.
+    Search the web for today's trending topics, optionally filtered by niche.
 
-    Uses Serper.dev (a Google Search API wrapper) to find current trends.
-    Makes TWO searches to get comprehensive results:
-        1. A general web search: "trending {niche} today {date}"
-        2. A news search: "{niche} trends" (news endpoint returns only recent articles)
-
-    Results from both are combined, deduplicated, and returned in a
-    simplified format. Uses 2 of your Serper API credits per run.
-
-    Args:
-        niche: The topic area to search for trends in (e.g. "AI and Tech",
-               "Fitness", "Marketing").
-
-    Returns:
-        A list of dicts, each containing:
-            - title (str): The headline of the search result
-            - snippet (str): A brief description/summary
-            - link (str): URL to the source article
-            - source (str): The domain name of the source
-
-        Returns an empty list if no results are found or the API call fails.
+    When niche is provided, searches for trends in that specific area.
+    When niche is None, searches for today's top trending topics across all categories.
     """
     today = date.today().isoformat()
 
-    # --- Search 1: General web search for trending topics ---
-    # This catches blog posts, listicles, and trend roundups
-    web_query = f"trending {niche} today {today}"
+    if niche:
+        web_query = f"trending {niche} today {today}"
+        news_query = f"{niche} trends"
+    else:
+        web_query = f"top trending topics today {today}"
+        news_query = "trending today"
+
     try:
-        web_response = _call_serper(SERPER_SEARCH_URL, web_query)
+        web_response = call_serper(SERPER_SEARCH_URL, web_query)
     except requests.exceptions.RequestException as e:
         print(f"   Warning: Web search failed: {e}")
         web_response = {}
 
-    web_results = _clean_results(web_response.get("organic", []))
+    web_results = clean_results(web_response.get("organic", []))
 
-    # --- Search 2: News search for recent articles ---
-    # The news endpoint only returns recent articles, so we get fresh results
-    news_query = f"{niche} trends"
     try:
-        news_response = _call_serper(SERPER_NEWS_URL, news_query)
+        news_response = call_serper(SERPER_NEWS_URL, news_query)
     except requests.exceptions.RequestException as e:
         print(f"   Warning: News search failed: {e}")
         news_response = {}
 
-    news_results = _clean_results(news_response.get("news", []))
+    news_results = clean_results(news_response.get("news", []))
 
-    # --- Combine and deduplicate ---
-    # News results go first (more likely to be fresh/trending)
-    all_results = _deduplicate(news_results + web_results)
+    # --- Google Trends: today's actual trending searches ---
+    print("   Fetching Google Trends data...")
+    trending_terms = get_trending_searches()
+    trends_results = []
+    for term in trending_terms:
+        trends_results.append({
+            "title": term,
+            "snippet": f"Trending on Google: {term}",
+            "link": f"https://trends.google.com/trends/explore?q={term.replace(' ', '+')}",
+            "source": "Google Trends",
+        })
+
+    # News first (freshest), then Google Trends (real signal), then web results
+    all_results = deduplicate(news_results + trends_results + web_results)
 
     return all_results

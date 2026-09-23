@@ -24,7 +24,7 @@ import os
 import anthropic
 
 
-def _get_text(response) -> str:
+def get_text(response) -> str:
     """
     Extract the text content from a Claude API response.
 
@@ -49,7 +49,7 @@ def _get_text(response) -> str:
 _client = None
 
 
-def _get_client() -> anthropic.Anthropic:
+def get_client() -> anthropic.Anthropic:
     """
     Get (or create) the Anthropic client.
 
@@ -147,7 +147,7 @@ Respond with ONLY a JSON object (no markdown, no code fences) in this exact form
 Pick the single best trend for this brand to post about. Respond with JSON only."""
 
     # Call Claude's Messages API
-    response = _get_client().messages.create(
+    response = get_client().messages.create(
         model=MODEL,
         max_tokens=1024,
         system=system_prompt,
@@ -155,9 +155,9 @@ Pick the single best trend for this brand to post about. Respond with JSON only.
     )
 
     # Extract the text from Claude's response.
-    # We use _get_text() because newer Claude models may return ThinkingBlocks
+    # We use get_text() because newer Claude models may return ThinkingBlocks
     # before the actual TextBlock in response.content.
-    response_text = _get_text(response)
+    response_text = get_text(response)
 
     # Parse the JSON response into a Python dict
     trend = json.loads(response_text)
@@ -221,20 +221,32 @@ IMPORTANT RULES:
     # The user message gives Claude the specific trend to write about
     # and the brand guidelines to follow. This is INFORMATION ROUTING —
     # we're passing live web data (the trend) into a writing workflow.
+    enrichment = ""
+    if trend.get("core_essence"):
+        enrichment += f"Core Essence: {trend['core_essence']}\n"
+    if trend.get("triggering_events"):
+        enrichment += f"Triggering Event(s): {trend['triggering_events']}\n"
+    if trend.get("trajectory"):
+        enrichment += f"Trajectory: {trend['trajectory']}\n"
+    if trend.get("key_phrases"):
+        enrichment += f"Key Phrases: {', '.join(trend['key_phrases'])}\n"
+    if trend.get("hashtags"):
+        enrichment += f"Related Hashtags: {' '.join(trend['hashtags'])}\n"
+
     user_message = f"""Write 3 social media posts about this trending topic for our brand.
 
 --- TRENDING TOPIC ---
 Title: {trend['trend_title']}
 Summary: {trend['trend_summary']}
 Source: {trend['source_url']}
-
+{enrichment}
 --- BRAND GUIDELINES ---
 {brand_guidelines}
 
 Write the 3 posts now (Twitter/X, LinkedIn, Instagram). Follow the format exactly."""
 
     # Call Claude's Messages API
-    response = _get_client().messages.create(
+    response = get_client().messages.create(
         model=MODEL,
         max_tokens=2048,
         system=system_prompt,
@@ -243,5 +255,5 @@ Write the 3 posts now (Twitter/X, LinkedIn, Instagram). Follow the format exactl
 
     # Return the raw markdown text — it's already formatted with
     # ## headers for each platform, ready to go into the output file.
-    # We use _get_text() to skip any ThinkingBlocks in the response.
-    return _get_text(response)
+    # We use get_text() to skip any ThinkingBlocks in the response.
+    return get_text(response)
