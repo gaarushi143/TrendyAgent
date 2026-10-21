@@ -10,313 +10,200 @@
 <style>
 :root {
   --violet: #5B3DF5;
-  --violet-dim: #4A32C8;
-  --violet-glow: rgba(91, 61, 245, 0.3);
-  --yellow: #FFD23F;
-  --yellow-dim: rgba(255, 210, 63, 0.15);
+  --violet-soft: #6E56F7;
   --ink: #1A1530;
   --mist: #F3F1FA;
   --white: #FFFFFF;
-  --bg: #0D0A1A;
-  --card: #151127;
-  --card-raised: #1C1635;
-  --border: #2A2447;
-  --border-light: #352E55;
-  --text: #E0DCF0;
-  --text-dim: #7B74A0;
-  --success: #34D399;
-  --fail: #F87171;
-  --warning: #FBBF24;
+  --bg: #111019;
+  --card: #17141F;
+  --border: #23202E;
+  --text: #C8C4D6;
+  --text-dim: #6B6580;
+  --success: #5CB88A;
+  --fail: #D16B6B;
+  --warning: #C4A84E;
   --mono: 'JetBrains Mono', monospace;
   --sans: 'Bricolage Grotesque', system-ui, sans-serif;
 }
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 html { font-size: 15px; }
-body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
-a { color: var(--violet); text-decoration: none; }
+body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; }
+a { color: var(--violet-soft); text-decoration: none; }
 
-/* Header */
 .header {
   display: flex; align-items: center; gap: 1rem;
-  padding: 0.75rem 1.5rem;
+  padding: 0.7rem 1.5rem;
   background: var(--ink);
   border-bottom: 1px solid var(--border);
   position: sticky; top: 0; z-index: 100;
 }
-.logo { display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0; }
-.logo svg { width: 32px; height: 32px; }
-.logo-text { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.03em; color: var(--white); }
-.logo-text span { color: var(--violet); }
+.logo { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+.logo svg { width: 28px; height: 28px; }
+.logo-text { font-size: 1.1rem; font-weight: 800; letter-spacing: -0.03em; color: var(--mist); }
+.logo-text span { color: var(--violet-soft); }
 .header-controls { display: flex; align-items: center; gap: 0.6rem; margin-left: auto; flex-wrap: wrap; }
-.header-controls label { font-size: 0.75rem; color: var(--text-dim); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-.field { display: flex; flex-direction: column; gap: 0.2rem; }
+.header-controls label { font-size: 0.7rem; color: var(--text-dim); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+.field { display: flex; flex-direction: column; gap: 0.15rem; }
 select, input[type="text"] {
-  font-family: var(--sans); font-size: 0.85rem; font-weight: 500;
-  padding: 0.4rem 0.6rem; border-radius: 6px;
+  font-family: var(--sans); font-size: 0.82rem; font-weight: 500;
+  padding: 0.35rem 0.55rem; border-radius: 5px;
   background: var(--card); color: var(--text); border: 1px solid var(--border);
   outline: none; transition: border-color 0.2s;
 }
 select:focus, input:focus { border-color: var(--violet); }
-select { cursor: pointer; min-width: 120px; }
-input[type="text"] { width: 180px; }
-.btn-run {
-  font-family: var(--sans); font-size: 0.85rem; font-weight: 700;
-  padding: 0.55rem 1.4rem; border-radius: 8px; border: none; cursor: pointer;
-  background: var(--violet); color: var(--white);
-  transition: all 0.2s; display: flex; align-items: center; gap: 0.4rem;
+select { cursor: pointer; min-width: 110px; }
+input[type="text"] { width: 160px; }
+.btn {
+  font-family: var(--sans); font-size: 0.8rem; font-weight: 600;
+  padding: 0.4rem 1rem; border-radius: 6px; border: none; cursor: pointer;
+  transition: opacity 0.2s; display: flex; align-items: center; gap: 0.35rem;
   align-self: flex-end;
 }
-.btn-run:hover { background: var(--violet-dim); transform: translateY(-1px); }
-.btn-run:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-.btn-run .spinner { display: none; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }
+.btn-run { background: var(--violet); color: var(--white); }
+.btn-run:hover { opacity: 0.85; }
+.btn-run:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-run .spinner { display: none; width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
 .btn-run.running .spinner { display: inline-block; }
 .btn-run.running .play-icon { display: none; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* Pipeline */
 .pipeline {
-  padding: 1.25rem 1.5rem;
+  padding: 0.9rem 1.5rem;
   display: flex; align-items: center; justify-content: center; gap: 0;
-  background: var(--card);
   border-bottom: 1px solid var(--border);
 }
-.step {
-  display: flex; align-items: center; gap: 0; position: relative;
-}
+.step { display: flex; align-items: center; gap: 0; position: relative; }
 .step-node {
-  width: 36px; height: 36px; border-radius: 50%;
+  width: 28px; height: 28px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  background: var(--card-raised); border: 2px solid var(--border);
-  font-size: 0.7rem; font-weight: 700; color: var(--text-dim);
-  transition: all 0.4s; position: relative; z-index: 2;
+  background: var(--card); border: 1.5px solid var(--border);
+  font-size: 0.65rem; font-weight: 700; color: var(--text-dim);
+  transition: all 0.3s; position: relative; z-index: 2;
 }
 .step-label {
   position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
-  margin-top: 0.4rem; font-size: 0.65rem; font-weight: 600;
-  color: var(--text-dim); white-space: nowrap; transition: color 0.4s;
-  text-transform: uppercase; letter-spacing: 0.04em;
+  margin-top: 0.3rem; font-size: 0.6rem; font-weight: 600;
+  color: var(--text-dim); white-space: nowrap; transition: color 0.3s;
+  text-transform: uppercase; letter-spacing: 0.03em;
 }
 .step-connector {
-  width: 40px; height: 2px; background: var(--border);
-  transition: background 0.4s; flex-shrink: 0;
+  width: 36px; height: 1.5px; background: var(--border);
+  transition: background 0.3s; flex-shrink: 0;
 }
 .step.done .step-node { background: var(--violet); border-color: var(--violet); color: var(--white); }
-.step.done .step-label { color: var(--violet); }
-.step.done .step-connector { background: var(--violet); }
-.step.active .step-node {
-  background: var(--yellow); border-color: var(--yellow); color: var(--ink);
-  box-shadow: 0 0 20px var(--yellow-dim), 0 0 40px rgba(255,210,63,0.08);
-  animation: pulse 2s ease-in-out infinite;
-}
-.step.active .step-label { color: var(--yellow); }
-@keyframes pulse {
-  0%, 100% { box-shadow: 0 0 20px var(--yellow-dim); }
-  50% { box-shadow: 0 0 30px rgba(255,210,63,0.35), 0 0 60px rgba(255,210,63,0.1); }
-}
-
-/* Main layout */
-.main { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); min-height: 320px; }
-.panel { background: var(--bg); padding: 1rem 1.25rem; display: flex; flex-direction: column; }
-.panel-header {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);
-}
-.panel-title { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); }
-.panel-badge {
-  font-size: 0.65rem; font-weight: 600; padding: 0.15rem 0.5rem;
-  border-radius: 10px; background: var(--violet-glow); color: var(--violet);
-}
+.step.done .step-label { color: var(--violet-soft); }
+.step.done + .step-connector, .step.done .step-connector { background: var(--violet); }
+.step.active .step-node { background: var(--violet); border-color: var(--violet); color: var(--white); opacity: 0.7; }
+.step.active .step-label { color: var(--text); }
 
 /* Console */
-.console-body {
-  flex: 1; overflow-y: auto; font-family: var(--mono); font-size: 0.78rem;
-  background: var(--card); border-radius: 8px; padding: 0.75rem;
-  max-height: 280px; line-height: 1.6;
-  border: 1px solid var(--border);
-}
-.console-body::-webkit-scrollbar { width: 6px; }
-.console-body::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
-.log-line { padding: 0.1rem 0; }
-.log-line::before { content: '▸ '; color: var(--violet); }
-.log-line.success { color: var(--success); }
-.log-line.success::before { content: '✓ '; }
-.log-line.warning { color: var(--warning); }
-.log-line.warning::before { content: '⚠ '; }
-.log-line.error { color: var(--fail); }
-.log-line.error::before { content: '✗ '; }
-.log-line.info { color: var(--text); }
-.console-empty { color: var(--text-dim); font-style: italic; font-family: var(--sans); font-size: 0.85rem; padding: 2rem; text-align: center; }
-
-/* Intelligence panel */
-.intel-body { flex: 1; overflow-y: auto; max-height: 280px; }
-
-/* Agent loop diagram */
-.agent-loop {
-  display: flex; align-items: center; justify-content: center; gap: 0.3rem;
-  padding: 0.6rem; margin-bottom: 0.75rem;
-  background: var(--card); border-radius: 8px; border: 1px solid var(--border);
-}
-.loop-step {
-  padding: 0.3rem 0.6rem; border-radius: 6px; font-size: 0.7rem;
-  font-weight: 600; background: var(--card-raised); color: var(--text-dim);
-  border: 1px solid var(--border); transition: all 0.3s;
-  text-align: center;
-}
-.loop-arrow { color: var(--text-dim); font-size: 0.7rem; }
-.loop-step.active { background: var(--yellow-dim); color: var(--yellow); border-color: var(--yellow); }
-.loop-step.done { background: var(--violet-glow); color: var(--violet); border-color: var(--violet); }
-.loop-return {
-  font-size: 0.6rem; color: var(--text-dim); text-align: center;
-  margin-top: 0.3rem; display: none;
-}
-.loop-return.visible { display: block; color: var(--yellow); }
-
-/* Quality scores */
-.scores-grid { display: flex; flex-direction: column; gap: 0.6rem; }
-.score-row { display: flex; align-items: center; gap: 0.6rem; }
-.score-platform { font-size: 0.75rem; font-weight: 600; width: 70px; flex-shrink: 0; }
-.score-bars { flex: 1; display: flex; gap: 0.25rem; }
-.score-bar-wrap {
-  flex: 1; height: 22px; background: var(--card);
-  border-radius: 4px; overflow: hidden; position: relative;
-  border: 1px solid var(--border);
-}
-.score-bar {
-  height: 100%; border-radius: 3px;
-  transition: width 0.6s ease-out; width: 0;
-}
-.score-bar.good { background: linear-gradient(90deg, var(--violet), #7C5CFF); }
-.score-bar.bad { background: linear-gradient(90deg, #E74C3C, var(--fail)); }
-.score-bar-label {
-  position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
-  font-size: 0.6rem; font-weight: 700; color: var(--white);
-  font-family: var(--mono);
-}
-.score-overall {
-  font-size: 0.85rem; font-weight: 800; width: 40px; text-align: right;
-  font-family: var(--mono); flex-shrink: 0;
-}
-.score-overall.pass { color: var(--success); }
-.score-overall.fail { color: var(--fail); }
-.score-status { font-size: 0.75rem; width: 16px; text-align: center; }
-.scores-empty { color: var(--text-dim); font-style: italic; font-size: 0.85rem; padding: 1.5rem; text-align: center; }
-.score-labels {
-  display: flex; gap: 0.25rem; margin-bottom: 0.4rem;
-  padding-left: 70px; padding-right: 56px;
-}
-.score-labels span {
-  flex: 1; font-size: 0.55rem; font-weight: 600;
-  color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.03em;
-  text-align: center;
-}
-.rewrite-badge {
-  margin-top: 0.6rem; padding: 0.4rem 0.6rem; border-radius: 6px;
-  background: var(--yellow-dim); color: var(--yellow);
-  font-size: 0.75rem; font-weight: 600; text-align: center;
+.console-section {
+  padding: 1rem 1.5rem;
   display: none;
 }
-.rewrite-badge.visible { display: block; }
+.console-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+.console-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-dim); }
+.console-badge {
+  font-size: 0.65rem; font-weight: 500; color: var(--text-dim);
+  font-family: var(--mono);
+}
+.console-body {
+  overflow-y: auto; font-family: var(--mono); font-size: 0.75rem;
+  background: var(--card); border-radius: 6px; padding: 0.6rem 0.75rem;
+  max-height: 200px; line-height: 1.55;
+  border: 1px solid var(--border);
+}
+.console-body::-webkit-scrollbar { width: 5px; }
+.console-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.log-line { padding: 0.05rem 0; color: var(--text-dim); }
+.log-line.success { color: var(--success); }
+.log-line.warning { color: var(--warning); }
+.log-line.error { color: var(--fail); }
+.log-line.info { color: var(--text); }
 
 /* Output section */
-.output-section {
-  border-top: 1px solid var(--border);
-  padding: 1rem 1.5rem;
-}
+.output-section { padding: 1rem 1.5rem; }
 .output-header {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 0.75rem; gap: 0.75rem; flex-wrap: wrap;
+  display: flex; align-items: center; gap: 0.5rem;
+  margin-bottom: 0.6rem; flex-wrap: wrap;
 }
 .output-tabs { display: flex; gap: 0; }
 .output-tab {
-  font-family: var(--sans); font-size: 0.8rem; font-weight: 600;
-  padding: 0.4rem 1rem; border: 1px solid var(--border);
+  font-family: var(--sans); font-size: 0.75rem; font-weight: 600;
+  padding: 0.35rem 0.8rem; border: 1px solid var(--border);
   background: var(--card); color: var(--text-dim); cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.15s;
 }
-.output-tab:first-child { border-radius: 6px 0 0 6px; }
-.output-tab:last-child { border-radius: 0 6px 6px 0; }
+.output-tab:first-child { border-radius: 5px 0 0 5px; }
+.output-tab:last-child { border-radius: 0 5px 5px 0; }
 .output-tab.active { background: var(--violet); color: var(--white); border-color: var(--violet); }
 .output-tab:hover:not(.active) { color: var(--text); }
-.output-files { display: flex; gap: 0.4rem; flex: 1; overflow-x: auto; }
+.output-files { display: flex; gap: 0.3rem; flex: 1; overflow-x: auto; }
 .file-chip {
-  font-family: var(--mono); font-size: 0.7rem; font-weight: 500;
-  padding: 0.3rem 0.6rem; border-radius: 6px;
+  font-family: var(--mono); font-size: 0.65rem; font-weight: 500;
+  padding: 0.25rem 0.5rem; border-radius: 5px;
   background: var(--card); color: var(--text-dim); border: 1px solid var(--border);
-  cursor: pointer; white-space: nowrap; transition: all 0.2s;
+  cursor: pointer; white-space: nowrap; transition: all 0.15s;
 }
 .file-chip:hover { border-color: var(--violet); color: var(--text); }
-.file-chip.active { border-color: var(--violet); color: var(--violet); background: var(--violet-glow); }
-.btn-save {
-  font-family: var(--sans); font-size: 0.8rem; font-weight: 600;
-  padding: 0.4rem 1rem; border-radius: 6px; border: 1px solid var(--violet);
-  background: transparent; color: var(--violet); cursor: pointer;
-  transition: all 0.2s;
+.file-chip.active { border-color: var(--violet); color: var(--violet-soft); }
+.output-actions { display: flex; gap: 0.3rem; }
+.btn-sm {
+  font-family: var(--sans); font-size: 0.75rem; font-weight: 600;
+  padding: 0.35rem 0.75rem; border-radius: 5px;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--text-dim); cursor: pointer; transition: all 0.15s;
 }
-.btn-save:hover { background: var(--violet); color: var(--white); }
-.btn-save.saved { border-color: var(--success); color: var(--success); }
+.btn-sm:hover { border-color: var(--violet); color: var(--text); }
+.btn-sm.saved { border-color: var(--success); color: var(--success); }
 .output-content {
-  background: var(--card); border: 1px solid var(--border); border-radius: 8px;
-  min-height: 300px; max-height: 500px; overflow-y: auto;
+  background: var(--card); border: 1px solid var(--border); border-radius: 6px;
+  min-height: 260px; max-height: 500px; overflow-y: auto;
 }
-.output-content::-webkit-scrollbar { width: 6px; }
-.output-content::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+.output-content::-webkit-scrollbar { width: 5px; }
+.output-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 #output-editor {
-  width: 100%; min-height: 300px; max-height: 500px;
+  width: 100%; min-height: 260px; max-height: 500px;
   background: transparent; color: var(--text); border: none;
-  font-family: var(--mono); font-size: 0.8rem; line-height: 1.6;
-  padding: 1rem; resize: vertical; outline: none;
+  font-family: var(--mono); font-size: 0.78rem; line-height: 1.6;
+  padding: 0.9rem; resize: vertical; outline: none;
 }
-#output-preview {
-  padding: 1.25rem; font-size: 0.9rem; line-height: 1.7;
-}
-#output-preview h1 { font-size: 1.5rem; font-weight: 800; color: var(--white); margin-bottom: 0.75rem; }
-#output-preview h2 { font-size: 1.15rem; font-weight: 700; color: var(--violet); margin-top: 1.5rem; margin-bottom: 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.3rem; }
-#output-preview p { margin-bottom: 0.6rem; }
-#output-preview strong { color: var(--white); }
-#output-preview a { color: var(--violet); }
-#output-preview hr { border: none; border-top: 1px solid var(--border); margin: 1.25rem 0; }
-#output-preview table { width: 100%; border-collapse: collapse; margin: 0.75rem 0; font-size: 0.8rem; }
-#output-preview th { background: var(--card-raised); padding: 0.4rem 0.6rem; text-align: left; font-weight: 600; color: var(--text-dim); border: 1px solid var(--border); }
-#output-preview td { padding: 0.4rem 0.6rem; border: 1px solid var(--border); }
-#output-preview ol, #output-preview ul { padding-left: 1.5rem; margin-bottom: 0.6rem; }
-#output-preview li { margin-bottom: 0.3rem; }
-#output-preview code { background: var(--card-raised); padding: 0.1rem 0.3rem; border-radius: 3px; font-family: var(--mono); font-size: 0.85em; }
-.output-empty { color: var(--text-dim); font-style: italic; text-align: center; padding: 3rem 1rem; }
-.output-empty svg { width: 48px; height: 48px; opacity: 0.3; margin-bottom: 0.75rem; }
+#output-preview { padding: 1rem; font-size: 0.88rem; line-height: 1.7; }
+#output-preview h1 { font-size: 1.3rem; font-weight: 800; color: var(--mist); margin-bottom: 0.6rem; }
+#output-preview h2 { font-size: 1.05rem; font-weight: 700; color: var(--violet-soft); margin-top: 1.25rem; margin-bottom: 0.4rem; border-bottom: 1px solid var(--border); padding-bottom: 0.25rem; }
+#output-preview p { margin-bottom: 0.5rem; }
+#output-preview strong { color: var(--mist); }
+#output-preview a { color: var(--violet-soft); }
+#output-preview hr { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
+#output-preview table { width: 100%; border-collapse: collapse; margin: 0.6rem 0; font-size: 0.78rem; }
+#output-preview th { background: var(--bg); padding: 0.35rem 0.5rem; text-align: left; font-weight: 600; color: var(--text-dim); border: 1px solid var(--border); }
+#output-preview td { padding: 0.35rem 0.5rem; border: 1px solid var(--border); }
+#output-preview ol, #output-preview ul { padding-left: 1.5rem; margin-bottom: 0.5rem; }
+#output-preview li { margin-bottom: 0.25rem; }
+#output-preview code { background: var(--bg); padding: 0.1rem 0.25rem; border-radius: 3px; font-family: var(--mono); font-size: 0.85em; }
+.output-empty { color: var(--text-dim); font-style: italic; text-align: center; padding: 3rem 1rem; font-size: 0.85rem; }
 
-/* Welcome state */
-.welcome {
-  text-align: center; padding: 4rem 2rem;
-  grid-column: 1 / -1;
-}
-.welcome h2 { font-size: 1.5rem; font-weight: 800; color: var(--white); margin-bottom: 0.5rem; }
-.welcome p { color: var(--text-dim); max-width: 500px; margin: 0 auto 1.5rem; line-height: 1.6; }
-.welcome .features {
-  display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap;
-  max-width: 700px; margin: 0 auto;
-}
-.feature {
-  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
-  padding: 1rem 1.25rem; width: 200px; text-align: left;
-}
-.feature-icon { font-size: 1.2rem; margin-bottom: 0.3rem; }
-.feature-title { font-size: 0.85rem; font-weight: 700; color: var(--white); margin-bottom: 0.2rem; }
-.feature-desc { font-size: 0.75rem; color: var(--text-dim); line-height: 1.5; }
+/* Welcome */
+.welcome { text-align: center; padding: 3rem 2rem; }
+.welcome h2 { font-size: 1.3rem; font-weight: 800; color: var(--mist); margin-bottom: 0.4rem; }
+.welcome p { color: var(--text-dim); max-width: 420px; margin: 0 auto; line-height: 1.6; font-size: 0.88rem; }
 
 @media (max-width: 768px) {
-  .main { grid-template-columns: 1fr; }
   .header { flex-wrap: wrap; }
   .header-controls { width: 100%; }
-  .pipeline { flex-wrap: wrap; padding: 1rem; }
+  .pipeline { padding: 0.75rem 1rem; }
 }
 </style>
 </head>
 <body>
 
-<!-- Header -->
 <header class="header">
   <div class="logo">
-    <svg viewBox="0 0 100 100" width="32" height="32">
+    <svg viewBox="0 0 100 100" width="28" height="28">
       <rect width="100" height="100" rx="26" fill="#5B3DF5"/>
       <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="9">
         <path stroke="#FFF" d="M24 46L80 46"/><path stroke="#FFF" d="M20 66L76 66"/>
@@ -335,15 +222,14 @@ input[type="text"] { width: 180px; }
       <label>Niche (optional)</label>
       <input type="text" id="niche-input" placeholder="e.g. AI and Tech">
     </div>
-    <button class="btn-run" id="btn-run" onclick="runAgent()">
+    <button class="btn btn-run" id="btn-run" onclick="runAgent()">
       <span class="play-icon">&#9654;</span>
       <span class="spinner"></span>
-      Run Agent
+      Run
     </button>
   </div>
 </header>
 
-<!-- Pipeline Progress -->
 <div class="pipeline" id="pipeline">
   <div class="step" data-step="searching">
     <div class="step-node">1</div>
@@ -376,84 +262,19 @@ input[type="text"] { width: 180px; }
   </div>
 </div>
 
-<!-- Main panels -->
-<div class="main" id="main-grid">
-
-  <!-- Welcome state (shown before first run) -->
-  <div class="welcome" id="welcome">
-    <svg viewBox="0 0 100 100" width="64" height="64" style="opacity:0.5;margin-bottom:1rem">
-      <rect width="100" height="100" rx="26" fill="#5B3DF5"/>
-      <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="9">
-        <path stroke="#FFF" d="M24 46L80 46"/><path stroke="#FFF" d="M20 66L76 66"/>
-        <path stroke="#FFF" d="M40 84L46 32"/>
-        <path stroke="#FFD23F" d="M60 84L68 20"/><path stroke="#FFD23F" d="M57 28L68 17L77 30"/>
-      </g>
-    </svg>
-    <h2>Ready to hack some trends</h2>
-    <p>Select a brand, optionally enter a niche, and hit Run. Watch the agent search, filter, enrich, write, and review in real time.</p>
-    <div class="features">
-      <div class="feature">
-        <div class="feature-icon">&#x1F50D;</div>
-        <div class="feature-title">Live Search</div>
-        <div class="feature-desc">Serper + Google Trends for real-time trending data</div>
-      </div>
-      <div class="feature">
-        <div class="feature-icon">&#x1F9E0;</div>
-        <div class="feature-title">AI Reasoning</div>
-        <div class="feature-desc">Claude filters, enriches, and writes brand-safe posts</div>
-      </div>
-      <div class="feature">
-        <div class="feature-icon">&#x1F504;</div>
-        <div class="feature-title">Feedback Loop</div>
-        <div class="feature-desc">Self-reviews and rewrites posts that don't pass quality checks</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Agent Console (hidden until run) -->
-  <div class="panel" id="console-panel" style="display:none">
-    <div class="panel-header">
-      <span class="panel-title">Agent Console</span>
-      <span class="panel-badge" id="api-calls-badge">0 API calls</span>
-    </div>
-    <div class="console-body" id="console"></div>
-  </div>
-
-  <!-- Intelligence Panel (hidden until run) -->
-  <div class="panel" id="intel-panel" style="display:none">
-    <div class="panel-header">
-      <span class="panel-title">Agent Intelligence</span>
-      <span class="panel-badge" id="loop-badge">Observation &amp; Reflection</span>
-    </div>
-    <div class="intel-body">
-      <!-- Agent loop diagram -->
-      <div class="agent-loop">
-        <div class="loop-step" id="loop-perceive">Perceive</div>
-        <span class="loop-arrow">&#8594;</span>
-        <div class="loop-step" id="loop-reason">Reason</div>
-        <span class="loop-arrow">&#8594;</span>
-        <div class="loop-step" id="loop-act">Act</div>
-        <span class="loop-arrow">&#8594;</span>
-        <div class="loop-step" id="loop-observe">Observe</div>
-      </div>
-      <div class="loop-return" id="loop-return">&#8635; Feedback loop: rewriting and re-evaluating</div>
-
-      <!-- Quality scores -->
-      <div id="scores-container">
-        <div class="scores-empty" id="scores-empty">Quality scores will appear after the review step</div>
-        <div id="scores-content" style="display:none">
-          <div class="score-labels">
-            <span>Brand</span><span>Platform</span><span>Authentic</span><span>Trend</span>
-          </div>
-          <div class="scores-grid" id="scores-grid"></div>
-          <div class="rewrite-badge" id="rewrite-badge"></div>
-        </div>
-      </div>
-    </div>
-  </div>
+<div class="welcome" id="welcome">
+  <h2>Ready to hack some trends</h2>
+  <p>Select a brand, optionally enter a niche, and hit Run. The agent will search, filter, enrich, write, and review posts for you.</p>
 </div>
 
-<!-- Output Section -->
+<div class="console-section" id="console-section">
+  <div class="console-header">
+    <span class="console-title">Agent Log</span>
+    <span class="console-badge" id="api-calls-badge">0 api calls</span>
+  </div>
+  <div class="console-body" id="console"></div>
+</div>
+
 <div class="output-section">
   <div class="output-header">
     <div class="output-tabs">
@@ -461,28 +282,25 @@ input[type="text"] { width: 180px; }
       <button class="output-tab" onclick="setOutputMode('edit')">Edit</button>
     </div>
     <div class="output-files" id="output-files"></div>
-    <button class="btn-save" id="btn-save" onclick="saveOutput()" style="display:none">Save</button>
+    <div class="output-actions" id="output-actions" style="display:none">
+      <button class="btn-sm" id="btn-save" onclick="saveOutput()">Save</button>
+      <button class="btn-sm" id="btn-download" onclick="downloadOutput()">Download .md</button>
+    </div>
   </div>
   <div class="output-content" id="output-content">
-    <div class="output-empty" id="output-empty">
-      <svg viewBox="0 0 100 100" width="48" height="48"><rect width="100" height="100" rx="26" fill="#5B3DF5" opacity="0.3"/><g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="9" opacity="0.3"><path stroke="#FFF" d="M24 46L80 46"/><path stroke="#FFF" d="M20 66L76 66"/><path stroke="#FFF" d="M40 84L46 32"/><path stroke="#FFD23F" d="M60 84L68 20"/><path stroke="#FFD23F" d="M57 28L68 17L77 30"/></g></svg>
-      <div>Run the agent or select a previous output file to view</div>
-    </div>
+    <div class="output-empty" id="output-empty">Run the agent or select a previous output to view</div>
     <div id="output-preview" style="display:none"></div>
     <textarea id="output-editor" style="display:none" spellcheck="false"></textarea>
   </div>
 </div>
 
 <script>
-const STEPS = ['searching','filtering','enriching','writing','reviewing','saving'];
 let currentOutput = '';
 let currentFilename = '';
 let outputMode = 'preview';
 let apiCalls = 0;
-let totalRewrites = 0;
 let evtSource = null;
 
-// Initialize
 document.addEventListener('DOMContentLoaded', () => {
   loadBrands();
   loadOutputFiles();
@@ -525,7 +343,7 @@ async function loadFile(filename) {
     currentFilename = filename;
     showOutput(currentOutput);
     document.querySelectorAll('.file-chip').forEach(c => c.classList.toggle('active', c.textContent === filename));
-    document.getElementById('btn-save').style.display = '';
+    document.getElementById('output-actions').style.display = '';
   } catch(e) { console.error('Failed to load file', e); }
 }
 
@@ -534,21 +352,16 @@ function runAgent() {
   const niche = document.getElementById('niche-input').value;
   if (!brand) return;
 
-  // Reset UI
   const btn = document.getElementById('btn-run');
   btn.classList.add('running');
   btn.disabled = true;
   apiCalls = 0;
-  totalRewrites = 0;
   updateApiCallsBadge();
 
   document.getElementById('welcome').style.display = 'none';
-  document.getElementById('console-panel').style.display = '';
-  document.getElementById('intel-panel').style.display = '';
+  document.getElementById('console-section').style.display = '';
   document.getElementById('console').innerHTML = '';
   resetPipeline();
-  resetScores();
-  resetLoopDiagram();
 
   const params = new URLSearchParams({brand, niche});
   evtSource = new EventSource(`/api/run?${params}`);
@@ -557,7 +370,6 @@ function runAgent() {
     const d = JSON.parse(e.data);
     setPipelineStep(d.step);
     addLog(d.message, 'info');
-    updateLoopDiagram(d.step);
   });
 
   evtSource.addEventListener('log', e => {
@@ -567,46 +379,32 @@ function runAgent() {
 
   evtSource.addEventListener('trends', e => {
     const trends = JSON.parse(e.data);
-    apiCalls += 3; // 2 serper + 1 google trends
+    apiCalls += 3;
     updateApiCallsBadge();
-    addLog(`Top 10 trending topics:`, 'info');
-    trends.slice(0, 5).forEach((t, i) => addLog(`  ${i+1}. ${t.title} (${t.source})`, 'info'));
-    if (trends.length > 5) addLog(`  ... and ${trends.length - 5} more`, 'info');
+    trends.slice(0, 5).forEach((t, i) => addLog(`${i+1}. ${t.title} (${t.source})`, 'info'));
+    if (trends.length > 5) addLog(`... and ${trends.length - 5} more`, 'info');
   });
 
-  evtSource.addEventListener('selected', e => {
-    apiCalls += 1;
-    updateApiCallsBadge();
-  });
+  evtSource.addEventListener('selected', e => { apiCalls += 1; updateApiCallsBadge(); });
 
   evtSource.addEventListener('enrichment', e => {
     const d = JSON.parse(e.data);
-    apiCalls += 4; // 3 serper + 1 claude
+    apiCalls += 4;
     updateApiCallsBadge();
     if (d.hashtags && d.hashtags.length) {
       addLog(`Hashtags: ${d.hashtags.slice(0, 5).join(' ')}`, 'info');
     }
   });
 
-  evtSource.addEventListener('posts', e => {
-    apiCalls += 1;
-    updateApiCallsBadge();
-  });
+  evtSource.addEventListener('posts', e => { apiCalls += 1; updateApiCallsBadge(); });
 
-  evtSource.addEventListener('review', e => {
-    const d = JSON.parse(e.data);
-    apiCalls += 1;
-    updateApiCallsBadge();
-    renderScores(d.scores, d.attempt);
-  });
+  evtSource.addEventListener('review', e => { apiCalls += 1; updateApiCallsBadge(); });
 
   evtSource.addEventListener('rewrite', e => {
     const d = JSON.parse(e.data);
     apiCalls += 1;
-    totalRewrites++;
     updateApiCallsBadge();
     addLog(`Rewrote ${d.platform} post (attempt ${d.attempt})`, 'warning');
-    updateRewriteBadge();
   });
 
   evtSource.addEventListener('complete', e => {
@@ -614,7 +412,8 @@ function runAgent() {
     currentOutput = d.output;
     currentFilename = d.filename;
     showOutput(d.output);
-    addLog(`Done! Saved to ${d.filename}`, 'success');
+    addLog(`Done — saved to ${d.filename}`, 'success');
+    document.getElementById('output-actions').style.display = '';
     finish();
     loadOutputFiles();
   });
@@ -635,10 +434,8 @@ function finish() {
   const btn = document.getElementById('btn-run');
   btn.classList.remove('running');
   btn.disabled = false;
-  document.getElementById('btn-save').style.display = '';
 }
 
-// Pipeline
 function resetPipeline() {
   document.querySelectorAll('.step').forEach(s => s.classList.remove('active','done'));
   document.querySelectorAll('.step-connector').forEach(c => c.style.background = '');
@@ -668,7 +465,6 @@ function setPipelineStep(step) {
   }
 }
 
-// Console
 function addLog(message, type) {
   const el = document.getElementById('console');
   const line = document.createElement('div');
@@ -679,94 +475,9 @@ function addLog(message, type) {
 }
 
 function updateApiCallsBadge() {
-  document.getElementById('api-calls-badge').textContent = `${apiCalls} API calls`;
+  document.getElementById('api-calls-badge').textContent = `${apiCalls} api calls`;
 }
 
-// Agent loop diagram
-function resetLoopDiagram() {
-  ['loop-perceive','loop-reason','loop-act','loop-observe'].forEach(id => {
-    document.getElementById(id).className = 'loop-step';
-  });
-  document.getElementById('loop-return').classList.remove('visible');
-}
-
-function updateLoopDiagram(step) {
-  resetLoopDiagram();
-  const map = {
-    'searching': 'loop-perceive',
-    'filtering': 'loop-reason',
-    'enriching': 'loop-reason',
-    'writing': 'loop-act',
-    'reviewing': 'loop-observe',
-    'saving': null,
-  };
-  const doneMap = {
-    'searching': [],
-    'filtering': ['loop-perceive'],
-    'enriching': ['loop-perceive'],
-    'writing': ['loop-perceive','loop-reason'],
-    'reviewing': ['loop-perceive','loop-reason','loop-act'],
-    'saving': ['loop-perceive','loop-reason','loop-act','loop-observe'],
-  };
-  const activeId = map[step];
-  if (activeId) document.getElementById(activeId).classList.add('active');
-  (doneMap[step] || []).forEach(id => document.getElementById(id).classList.add('done'));
-  if (step === 'reviewing' && totalRewrites > 0) {
-    document.getElementById('loop-return').classList.add('visible');
-  }
-}
-
-// Scores
-function resetScores() {
-  document.getElementById('scores-empty').style.display = '';
-  document.getElementById('scores-content').style.display = 'none';
-  document.getElementById('scores-grid').innerHTML = '';
-  document.getElementById('rewrite-badge').classList.remove('visible');
-}
-
-function renderScores(scores, attempt) {
-  document.getElementById('scores-empty').style.display = 'none';
-  document.getElementById('scores-content').style.display = '';
-  const grid = document.getElementById('scores-grid');
-  grid.innerHTML = '';
-
-  const platforms = [
-    {key: 'twitter', label: 'Twitter/X'},
-    {key: 'linkedin', label: 'LinkedIn'},
-    {key: 'instagram', label: 'Instagram'},
-  ];
-  const criteria = ['score_brand_alignment','score_platform_fit','score_authenticity','score_trend_connection'];
-
-  platforms.forEach(p => {
-    const s = scores[p.key] || {};
-    const overall = s.overall || 0;
-    const pass = s.pass !== false;
-    const row = document.createElement('div');
-    row.className = 'score-row';
-    row.innerHTML = `
-      <div class="score-platform">${p.label}</div>
-      <div class="score-bars">
-        ${criteria.map(c => {
-          const v = s[c] || 0;
-          const cls = v >= 7 ? 'good' : 'bad';
-          return `<div class="score-bar-wrap"><div class="score-bar ${cls}" style="width:${v*10}%"></div><span class="score-bar-label">${v}</span></div>`;
-        }).join('')}
-      </div>
-      <div class="score-overall ${pass ? 'pass' : 'fail'}">${overall}</div>
-      <div class="score-status">${pass ? '&#10003;' : '&#10007;'}</div>
-    `;
-    grid.appendChild(row);
-  });
-}
-
-function updateRewriteBadge() {
-  const badge = document.getElementById('rewrite-badge');
-  badge.textContent = `${totalRewrites} rewrite${totalRewrites !== 1 ? 's' : ''} performed`;
-  badge.classList.add('visible');
-  document.getElementById('loop-return').classList.add('visible');
-}
-
-// Output
 function showOutput(content) {
   currentOutput = content;
   document.getElementById('output-empty').style.display = 'none';
@@ -786,7 +497,7 @@ function setOutputMode(mode) {
   document.querySelectorAll('.output-tab').forEach((t, i) => {
     t.classList.toggle('active', (mode === 'preview' && i === 0) || (mode === 'edit' && i === 1));
   });
-  if (mode === 'edit' && document.getElementById('output-editor').style.display === 'none') {
+  if (mode === 'edit') {
     document.getElementById('output-editor').value = currentOutput;
   }
   if (mode === 'preview' && document.getElementById('output-editor').style.display !== 'none') {
@@ -807,10 +518,26 @@ async function saveOutput() {
       body: JSON.stringify({content: currentOutput}),
     });
     const btn = document.getElementById('btn-save');
-    btn.textContent = 'Saved!';
+    btn.textContent = 'Saved';
     btn.classList.add('saved');
-    setTimeout(() => { btn.textContent = 'Save'; btn.classList.remove('saved'); }, 2000);
+    setTimeout(() => { btn.textContent = 'Save'; btn.classList.remove('saved'); }, 1500);
   } catch(e) { console.error('Save failed', e); }
+}
+
+function downloadOutput() {
+  if (!currentOutput) return;
+  if (outputMode === 'edit') {
+    currentOutput = document.getElementById('output-editor').value;
+  }
+  const blob = new Blob([currentOutput], {type: 'text/markdown'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = currentFilename || 'trendhacker-output.md';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 </script>
 </body>
