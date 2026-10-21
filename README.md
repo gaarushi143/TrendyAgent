@@ -57,7 +57,11 @@ Give it a brand name and optional niche like "Fitness" or "AI and Tech", and it 
 
 ```
 AgentTrendhacker/
-├── agent.py                # Main entry point — orchestrates the full pipeline + feedback loop
+├── agent.py                # CLI entry point — orchestrates the full pipeline + feedback loop
+├── web/
+│   ├── app.py              # Flask web server with SSE streaming
+│   └── templates/
+│       └── index.html      # Dashboard UI (dark theme, brand colors)
 ├── tools/
 │   ├── __init__.py         # Makes tools/ a Python package
 │   ├── search.py           # Web search tool (Serper.dev + Google Trends)
@@ -99,6 +103,28 @@ AgentTrendhacker/
 - `rewrite_post()` — rewrites a single failing post using the reviewer's specific feedback
 
 **`brands/{name}.md`** tells Claude about your brand — name, tone of voice, target audience, and topics to avoid. Add your own brand by creating a new file in the `brands/` directory.
+
+**`web/app.py`** is the Flask web server. It wraps the same pipeline as `agent.py` but streams progress via Server-Sent Events (SSE) so the dashboard can show each step in real time.
+
+**`web/templates/index.html`** is the dashboard UI — a single-page app with the TrendHacker brand design (dark theme, Bricolage Grotesque typography, violet/yellow accent colors). Features:
+- **Pipeline tracker** — animated step indicators (Search → Filter → Enrich → Write → Review → Done)
+- **Agent console** — terminal-style log of every action the agent takes
+- **Agent intelligence panel** — shows the Perceive → Reason → Act → Observe loop diagram and quality review scores with per-criteria bar charts
+- **Markdown editor/viewer** — toggle between rendered preview and raw markdown editing, with save back to file
+- **Past runs browser** — click any previous output file to view or edit it
+
+## Web Dashboard
+
+The web dashboard lets you run TrendHacker from a browser with real-time visualization of the agent pipeline.
+
+```bash
+source .venv/bin/activate
+python3 web/app.py
+```
+
+Then open [http://localhost:5001](http://localhost:5001). Select a brand, optionally enter a niche, and click **Run Agent**.
+
+The dashboard streams every step as it happens — you'll see the pipeline progress bar light up, the agent console log each decision, and the quality scores appear after the review step. When a post fails review and gets rewritten, the feedback loop indicator activates.
 
 ## Setup
 
