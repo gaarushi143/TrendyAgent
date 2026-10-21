@@ -100,7 +100,6 @@ input[type="text"] { width: 160px; }
 /* Console */
 .console-section {
   padding: 1rem 1.5rem;
-  display: none;
 }
 .console-header {
   display: flex; align-items: center; justify-content: space-between;
@@ -359,7 +358,6 @@ function runAgent() {
   updateApiCallsBadge();
 
   document.getElementById('welcome').style.display = 'none';
-  document.getElementById('console-section').style.display = '';
   document.getElementById('console').innerHTML = '';
   resetPipeline();
 
