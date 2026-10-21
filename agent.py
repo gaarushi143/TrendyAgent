@@ -1,20 +1,24 @@
 """
-agent.py — Main entry point for the Trend-Jacking Social Monitor.
+agent.py — Main entry point for TrendHacker.
 
 This is the orchestrator script that ties the entire pipeline together.
-It takes a niche from the user, searches for trending topics, filters them
-for brand safety, and generates social media posts.
+It takes a brand name and optional niche, searches for trending topics,
+filters them for brand safety, generates social media posts, and runs
+a quality review loop to ensure posts meet brand standards.
 
 Usage:
-    python agent.py --niche "AI and Tech"
-    python agent.py --niche "Fitness" --brand acme
-    python agent.py                          # generic top 10 trends, default brand
+    python agent.py --brand acme --niche "AI and Tech"
+    python agent.py --brand aerie --niche "Music"
+    python agent.py --brand acme                      # generic top trends
+    python agent.py --brand myco --brand-file ~/guidelines.md
 
-The pipeline flows in 4 steps:
+The pipeline flows in 6 steps:
     1. Read brand guidelines from a markdown file
     2. Search the web for trending topics in the given niche (tools/search.py)
     3. Use Claude to filter results and pick the best brand-safe trend (tools/writer.py)
-    4. Use Claude to draft 3 social media posts tying the trend to the brand (tools/writer.py)
+    4. Enrich the chosen trend with deep research (tools/enrich.py)
+    5. Use Claude to draft 3 social media posts tying the trend to the brand (tools/writer.py)
+    6. Quality review loop — Claude evaluates posts and rewrites any that fail (max 2 retries)
 
 Output is saved to: output/posts_YYYY-MM-DD.md
 """
@@ -29,19 +33,27 @@ from dotenv import load_dotenv
 
 from tools.enrich import enrich_trend
 from tools.search import search_trending
-from tools.writer import filter_trends, write_posts
+from tools.writer import filter_trends, write_posts, review_posts, rewrite_post, split_posts, replace_post
 
 # Load environment variables from .env file (API keys live here)
 load_dotenv()
 
 
-def load_brand_guidelines(name: str = "acme") -> str:
+def load_brand_guidelines(name: str, file_path: str = None) -> str:
     """
-    Load brand guidelines by brand name.
+    Load brand guidelines by name or explicit file path.
 
-    Looks for brands/{name}.md first. Falls back to treating the argument
-    as a direct file path for backwards compatibility.
+    If file_path is given and exists, loads from that path directly.
+    Otherwise looks for brands/{name}.md, then falls back to treating
+    the name as a direct file path for backwards compatibility.
     """
+    if file_path:
+        fp = Path(file_path)
+        if fp.exists():
+            return fp.read_text()
+        print(f"Error: Brand file not found at: {file_path}")
+        sys.exit(1)
+
     brand_file = Path("brands") / f"{name}.md"
     if brand_file.exists():
         return brand_file.read_text()
@@ -78,22 +90,25 @@ def save_output(content: str, niche: str) -> str:
 
 def main():
     """
-    Main function — runs the full trend-jacking pipeline.
+    Main function — runs the full TrendHacker pipeline.
 
     Steps:
-        1. Parse CLI arguments (--niche is required, --brand is optional)
+        1. Parse CLI arguments (--brand is required, --niche is optional)
         2. Validate that API keys are set in the environment
         3. Load brand guidelines from the markdown file
         4. Search for trending topics using Serper.dev
         5. Filter trends using Claude (picks the best, brand-safe trend)
-        6. Generate 3 social media posts using Claude
-        7. Save everything to a markdown file in output/
+        6. Enrich the trend with deep research
+        7. Generate 3 social media posts using Claude
+        8. Quality review loop — evaluate and rewrite posts if needed
+        9. Save everything to a markdown file in output/
     """
 
     # --- Step 1: Parse command-line arguments ---
-    parser = argparse.ArgumentParser(description="Trend-Jacking Social Monitor")
+    parser = argparse.ArgumentParser(description="TrendHacker — AI-powered trend-jacking agent")
+    parser.add_argument("--brand", required=True, help='Brand name — loads brands/{name}.md (e.g. "acme"). Required.')
+    parser.add_argument("--brand-file", default=None, help='Direct path to a brand guidelines .md file (overrides brands/{name}.md lookup)')
     parser.add_argument("--niche", default=None, help='The niche to search trends for (e.g. "AI and Tech"). Omit for generic top trends.')
-    parser.add_argument("--brand", default="acme", help='Brand name — loads brands/{name}.md (e.g. "acme")')
     args = parser.parse_args()
 
     # --- Step 2: Validate API keys ---
@@ -106,7 +121,7 @@ def main():
         sys.exit(1)
 
     # --- Step 3: Load brand guidelines ---
-    brand_guidelines = load_brand_guidelines(args.brand)
+    brand_guidelines = load_brand_guidelines(args.brand, args.brand_file)
 
     # --- Step 4: Search for trending topics ---
     niche = args.niche
@@ -140,14 +155,46 @@ def main():
         print(f'   Hashtags: {" ".join(trend["hashtags"][:5])}')
 
     # --- Step 7: Generate social media posts with Claude ---
-    # Claude writes 3 posts (Twitter, LinkedIn, Instagram) that tie the
-    # trending topic to the brand naturally
     print(f"\n✍️  Drafting social media posts...")
     posts_markdown = write_posts(trend, brand_guidelines)
 
-    # --- Step 7: Assemble and save the output ---
-    # Combine the trend metadata and drafted posts into one markdown file
-    output = f"# Trend-Jacking Posts — {date.today().isoformat()}\n\n"
+    # --- Step 8: Quality review loop ---
+    print(f"\n🔍 Reviewing post quality...")
+    rewrites_done = 0
+    final_review = None
+
+    for attempt in range(3):
+        review = review_posts(posts_markdown, brand_guidelines)
+        final_review = review
+
+        for platform in ["twitter", "linkedin", "instagram"]:
+            r = review.get(platform, {})
+            score = r.get("overall", "?")
+            status = "PASS" if r.get("pass", True) else "FAIL"
+            print(f"   {platform.capitalize():12s}: {score}/10 {status}")
+
+        failing = [p for p in ["twitter", "linkedin", "instagram"]
+                    if not review.get(p, {}).get("pass", True)]
+
+        if not failing:
+            print(f"   All posts passed quality review!")
+            break
+
+        if attempt >= 2:
+            print(f"   Max retries reached — keeping best versions.")
+            break
+
+        print(f"   Rewriting {len(failing)} post(s)...")
+        posts_by_platform = split_posts(posts_markdown)
+        for platform in failing:
+            original = posts_by_platform.get(platform, "")
+            feedback = review[platform].get("feedback", "")
+            rewritten = rewrite_post(platform, original, feedback, trend, brand_guidelines)
+            posts_markdown = replace_post(posts_markdown, platform, rewritten)
+            rewrites_done += 1
+
+    # --- Step 9: Assemble and save the output ---
+    output = f"# TrendHacker Posts — {date.today().isoformat()}\n\n"
     output += f"**Niche:** {niche_label}\n\n"
     output += f'**Trend:** {trend["trend_title"]}\n\n'
     output += f'**Source:** {trend["source_url"]}\n\n'
@@ -158,11 +205,27 @@ def main():
     output += f'**Trajectory:** {trend.get("trajectory", "N/A")}\n\n'
     output += f'**Key Phrases:** {", ".join(trend.get("key_phrases", []))}\n\n'
     output += f'**Related Hashtags:** {" ".join(trend.get("hashtags", []))}\n\n'
+
+    # Quality review scores
+    if final_review:
+        output += "## Quality Review\n\n"
+        output += "| Platform | Brand Alignment | Platform Fit | Authenticity | Trend Connection | Overall | Status |\n"
+        output += "|----------|----------------|--------------|--------------|------------------|---------|--------|\n"
+        for platform in ["twitter", "linkedin", "instagram"]:
+            r = final_review.get(platform, {})
+            name = {"twitter": "Twitter/X", "linkedin": "LinkedIn", "instagram": "Instagram"}[platform]
+            ba = r.get("score_brand_alignment", "—")
+            pf = r.get("score_platform_fit", "—")
+            au = r.get("score_authenticity", "—")
+            tc = r.get("score_trend_connection", "—")
+            ov = r.get("overall", "—")
+            st = "Pass" if r.get("pass", True) else "Fail"
+            output += f"| {name} | {ba} | {pf} | {au} | {tc} | {ov} | {st} |\n"
+        output += f"\nRewrites needed: {rewrites_done}\n\n"
+
     output += "---\n\n"
     output += posts_markdown
 
-    # Append the full list of top 10 trending topics at the end
-    # so the user can see what else was found and get inspiration
     output += "\n\n---\n\n"
     output += "## All Trending Topics Found\n\n"
     for i, r in enumerate(top_results, 1):

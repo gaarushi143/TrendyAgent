@@ -106,22 +106,38 @@ Single Python script (`agent.py`) with helper modules. No framework — raw Anth
 - Print a summary to terminal showing what was found and written
 - Add basic error handling (missing API keys, no results found)
 
+## Phase 7: Feedback Loop (Observation & Reflection)
+
+**Files:** `tools/writer.py`, `agent.py`
+
+- After posts are written, a quality review loop runs:
+  1. `review_posts()` sends all 3 posts + brand guidelines to Claude for scoring
+  2. Claude evaluates each post on 4 criteria (brand alignment, platform fit, authenticity, trend connection), scores 1-10
+  3. Posts with an average score < 7 fail and get specific feedback
+  4. `rewrite_post()` takes a failing post + feedback and has Claude rewrite it
+  5. Loop runs up to 3 times (initial + 2 retries); stops early when all posts pass
+- Helper functions `split_posts()` and `replace_post()` handle splicing rewrites back into the combined markdown
+- Final review scores are included in the output as a "## Quality Review" table
+- CLI changes: `--brand` is now required, `--brand-file` allows a direct path to a guidelines file
+
+**Key learning:** Observation & Reflection — the agent evaluates its own output against quality criteria and iterates to improve, completing the perception → reasoning → action → observation loop.
+
 ## Brand Guidelines
 
-Brand files live in `brands/{name}.md` and are selected via `--brand {name}`. Each contains:
+Brand files live in `brands/{name}.md` and are selected via `--brand {name}` (required). A direct file path can be provided with `--brand-file`. Each brand file contains:
 - Brand name, industry, tone of voice
 - Target audience
 - Topics to avoid
 - Key messaging pillars
 
-Ships with `brands/acme.md` as the default example.
+Ships with `brands/acme.md` as a sample.
 
 ## Verification
 
 1. Set up `.env` with real API keys
-2. Run `python3 agent.py --niche "AI and Tech" --brand acme`
-3. Confirm it searches, filters, enriches, and writes to `output/posts_YYYY-MM-DD.md`
+2. Run `python3 agent.py --brand acme --niche "AI and Tech"`
+3. Confirm it searches, filters, enriches, writes, reviews, and saves to `output/posts_YYYY-MM-DD.md`
 4. Run with a different niche (`--niche "Fitness"`) to verify it adapts
-5. Run without a niche (`python3 agent.py`) to verify generic trends work
-6. Run with a different brand (`--brand nike`) after creating `brands/nike.md`
-7. Check the markdown file has the Trend Brief section + all 3 post formats
+5. Run without `--brand` to confirm it errors with "required argument"
+6. Run with `--brand-file` pointing to a custom file to verify direct path loading
+7. Check the markdown file has the Quality Review table + all 3 post formats

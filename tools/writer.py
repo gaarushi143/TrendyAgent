@@ -20,6 +20,7 @@ Both functions call Claude's Messages API via the Anthropic Python SDK.
 
 import json
 import os
+import re
 
 import anthropic
 
@@ -256,4 +257,150 @@ Write the 3 posts now (Twitter/X, LinkedIn, Instagram). Follow the format exactl
     # Return the raw markdown text — it's already formatted with
     # ## headers for each platform, ready to go into the output file.
     # We use get_text() to skip any ThinkingBlocks in the response.
+    return get_text(response)
+
+
+PLATFORM_HEADERS = {
+    "twitter": "## Twitter/X Post",
+    "linkedin": "## LinkedIn Post",
+    "instagram": "## Instagram Caption",
+}
+
+
+def split_posts(posts_markdown: str) -> dict[str, str]:
+    """Split the combined posts markdown into per-platform sections."""
+    sections = re.split(r"(?=^## )", posts_markdown, flags=re.MULTILINE)
+    result = {}
+    for section in sections:
+        section = section.strip()
+        if not section:
+            continue
+        lower = section.lower()
+        if "twitter" in lower:
+            result["twitter"] = section
+        elif "linkedin" in lower:
+            result["linkedin"] = section
+        elif "instagram" in lower:
+            result["instagram"] = section
+    return result
+
+
+def replace_post(posts_markdown: str, platform: str, new_post: str) -> str:
+    """Replace one platform's section in the combined posts markdown."""
+    old_posts = split_posts(posts_markdown)
+    if platform not in old_posts:
+        return posts_markdown
+    return posts_markdown.replace(old_posts[platform], new_post.strip())
+
+
+def review_posts(posts_markdown: str, brand_guidelines: str) -> dict:
+    """
+    Have Claude evaluate each post against brand guidelines.
+
+    Returns a dict keyed by platform (twitter/linkedin/instagram), each with:
+        score_brand_alignment, score_platform_fit, score_authenticity,
+        score_trend_connection, overall (average), pass (bool), feedback (str)
+    """
+    system_prompt = """You are a brand quality reviewer. You evaluate social media posts
+against brand guidelines on 4 criteria, scoring each 1-10:
+
+1. BRAND ALIGNMENT — Does the post match the brand's tone, voice, and messaging pillars?
+2. PLATFORM FIT — Does it follow the platform's conventions? (Twitter ≤280 chars, LinkedIn professional, Instagram casual with hashtags)
+3. AUTHENTICITY — Does it sound like a real person, not a marketing bot? No generic filler, no forced sales pitch?
+4. TREND CONNECTION — Is the trend tied to the brand naturally, not shoehorned in?
+
+Respond with ONLY a JSON object (no markdown, no code fences):
+{
+    "twitter": {
+        "score_brand_alignment": 8,
+        "score_platform_fit": 9,
+        "score_authenticity": 7,
+        "score_trend_connection": 8,
+        "overall": 8.0,
+        "pass": true,
+        "feedback": "Specific feedback if the post needs improvement, empty string if it passes"
+    },
+    "linkedin": { ... },
+    "instagram": { ... }
+}
+
+A post passes if its overall score (average of the 4 criteria) is >= 7.
+Be honest and specific in feedback — vague praise doesn't help."""
+
+    user_message = f"""Review these social media posts against the brand guidelines.
+
+--- POSTS ---
+{posts_markdown}
+
+--- BRAND GUIDELINES ---
+{brand_guidelines}
+
+Score each post. Respond with JSON only."""
+
+    response = get_client().messages.create(
+        model=MODEL,
+        max_tokens=1024,
+        system=system_prompt,
+        messages=[{"role": "user", "content": user_message}],
+    )
+
+    response_text = get_text(response)
+
+    stripped = response_text.strip()
+    if stripped.startswith("```"):
+        lines = stripped.split("\n")
+        lines = [l for l in lines if not l.strip().startswith("```")]
+        stripped = "\n".join(lines)
+
+    try:
+        return json.loads(stripped)
+    except json.JSONDecodeError:
+        return {
+            "twitter": {"overall": 10, "pass": True, "feedback": ""},
+            "linkedin": {"overall": 10, "pass": True, "feedback": ""},
+            "instagram": {"overall": 10, "pass": True, "feedback": ""},
+        }
+
+
+def rewrite_post(platform: str, original_post: str, feedback: str,
+                  trend: dict, brand_guidelines: str) -> str:
+    """Rewrite a single post that failed quality review, addressing the feedback."""
+    platform_names = {
+        "twitter": "Twitter/X Post",
+        "linkedin": "LinkedIn Post",
+        "instagram": "Instagram Caption",
+    }
+    platform_name = platform_names.get(platform, platform)
+
+    system_prompt = f"""You are a social media copywriter revising a {platform_name}.
+You received specific feedback from a quality reviewer. Rewrite the post to
+address that feedback while keeping the same trend and brand voice.
+
+Return ONLY the rewritten post section in markdown, starting with the ## header.
+Do not include any explanation — just the revised post."""
+
+    user_message = f"""Rewrite this post to address the reviewer's feedback.
+
+--- ORIGINAL POST ---
+{original_post}
+
+--- REVIEWER FEEDBACK ---
+{feedback}
+
+--- TRENDING TOPIC ---
+Title: {trend['trend_title']}
+Summary: {trend['trend_summary']}
+
+--- BRAND GUIDELINES ---
+{brand_guidelines}
+
+Rewrite the {platform_name} now. Start with ## {platform_name}."""
+
+    response = get_client().messages.create(
+        model=MODEL,
+        max_tokens=1024,
+        system=system_prompt,
+        messages=[{"role": "user", "content": user_message}],
+    )
+
     return get_text(response)
