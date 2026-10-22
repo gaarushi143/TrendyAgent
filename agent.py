@@ -227,12 +227,23 @@ def main():
     output += posts_markdown
 
     output += "\n\n---\n\n"
-    output += "## All Trending Topics Found\n\n"
-    for i, r in enumerate(top_results, 1):
-        output += f"{i}. **{r['title']}**\n"
-        output += f"   - Source: {r['source']}\n"
-        output += f"   - {r['snippet']}\n"
-        output += f"   - [Read more]({r['link']})\n\n"
+    output += "## Top Trending Topics\n\n"
+    top_trends = trend.get("top_trends", [])
+    if top_trends:
+        for i, t in enumerate(top_trends, 1):
+            marker = " — *Selected*" if i == 1 else ""
+            output += f"**{i}. {t['name']}**{marker}\n\n"
+            output += f"{t.get('context', '')}\n\n"
+            if i == 1:
+                if trend.get("hashtags"):
+                    output += f"Hashtags: {' '.join(trend['hashtags'])}\n\n"
+                if trend.get("trajectory"):
+                    output += f"Trajectory: {trend['trajectory']}\n\n"
+    else:
+        for i, r in enumerate(top_results, 1):
+            output += f"**{i}. {r['title']}**\n\n"
+            output += f"{r['snippet']}\n\n"
+            output += f"*Source: {r['source']}* — [Read more]({r['link']})\n\n"
 
     filepath = save_output(output, niche_label)
     print(f"\n✅ Done! Posts saved to: {filepath}")

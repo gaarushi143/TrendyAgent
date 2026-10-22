@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "trendhacker-web",
+      "runtimeExecutable": "/Users/aarushigupta/Repos/AgentTrendhacker/.venv/bin/python3",
+      "runtimeArgs": ["web/app.py"],
+      "port": 5001
+    }
+  ]
+}

@@ -10,18 +10,17 @@
 <style>
 :root {
   --violet: #5B3DF5;
-  --violet-light: #EDE9FE;
+  --violet-light: #F0EDFF;
   --violet-text: #4C35CC;
-  --bg: #F6F5FA;
+  --bg: #FAFAFA;
   --white: #FFFFFF;
-  --glass: rgba(255, 255, 255, 0.65);
-  --glass-border: rgba(180, 170, 210, 0.25);
-  --text: #2D2A3E;
-  --text-secondary: #7A7490;
-  --text-dim: #A09CB0;
-  --success: #2E9E6A;
-  --fail: #C44E4E;
-  --warning: #A68B2D;
+  --border: #E8E6EE;
+  --text: #1A1725;
+  --text-2: #6B6580;
+  --text-3: #A09AAF;
+  --green: #2E9E6A;
+  --red: #C44E4E;
+  --yellow: #A68B2D;
   --mono: 'JetBrains Mono', monospace;
   --sans: 'Bricolage Grotesque', system-ui, sans-serif;
 }
@@ -29,190 +28,218 @@
 html { font-size: 15px; }
 body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; }
 
-/* Header */
-.header {
-  display: flex; align-items: center; gap: 1rem;
-  padding: 0.6rem 1.5rem;
+/* ── Top bar ── */
+.topbar {
+  position: sticky; top: 0; z-index: 10;
   background: var(--white);
-  border-bottom: 1px solid var(--glass-border);
+  border-bottom: 1px solid var(--border);
+  padding: 0 1.5rem;
+  height: 48px;
+  display: flex; align-items: center; gap: 1.25rem;
 }
-.logo { display: flex; align-items: center; gap: 0.5rem; }
-.logo svg { width: 26px; height: 26px; }
-.logo-text { font-size: 1.05rem; font-weight: 800; letter-spacing: -0.02em; color: var(--text); }
+.logo { display: flex; align-items: center; gap: 0.35rem; flex-shrink: 0; }
+.logo svg { width: 22px; height: 22px; }
+.logo-text { font-size: 0.95rem; font-weight: 800; letter-spacing: -0.01em; }
 .logo-text span { color: var(--violet); }
-.header-controls { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; flex-wrap: wrap; }
-.header-controls label { font-size: 0.65rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
-.field { display: flex; flex-direction: column; gap: 0.1rem; }
-select, input[type="text"] {
+
+.controls { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; }
+.ctrl-field {
   font-family: var(--sans); font-size: 0.8rem; font-weight: 500;
   padding: 0.3rem 0.5rem; border-radius: 6px;
-  background: var(--bg); color: var(--text); border: 1px solid var(--glass-border);
-  outline: none;
+  background: var(--bg); color: var(--text); border: 1px solid var(--border);
+  outline: none; transition: border-color 0.15s;
 }
-select:focus, input:focus { border-color: var(--violet); }
-select { cursor: pointer; min-width: 100px; }
-input[type="text"] { width: 150px; }
+.ctrl-field:focus { border-color: var(--violet); }
+.ctrl-field.invalid { border-color: var(--red); }
+select.ctrl-field { cursor: pointer; }
+.ctrl-field.w-niche { width: 120px; }
+.ctrl-field.w-url { width: 180px; }
 .btn-run {
-  font-family: var(--sans); font-size: 0.78rem; font-weight: 700;
-  padding: 0.35rem 1rem; border-radius: 6px; border: none; cursor: pointer;
-  background: var(--violet); color: var(--white);
-  display: flex; align-items: center; gap: 0.3rem; align-self: flex-end;
+  font-family: var(--sans); font-size: 0.8rem; font-weight: 700;
+  height: 30px; padding: 0 0.85rem; border-radius: 6px; border: none;
+  background: var(--violet); color: #fff; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  transition: opacity 0.15s;
 }
-.btn-run:hover { opacity: 0.9; }
-.btn-run:disabled { opacity: 0.4; cursor: not-allowed; }
-.btn-run .spinner { display: none; width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
-.btn-run.running .spinner { display: inline-block; }
-.btn-run.running .play-icon { display: none; }
-@keyframes spin { to { transform: rotate(360deg); } }
+.btn-run:hover { opacity: 0.85; }
+.btn-run:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-run .spin { display: none; width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: sp .6s linear infinite; }
+.btn-run.running .spin { display: block; }
+.btn-run.running .play { display: none; }
+@keyframes sp { to { transform: rotate(360deg); } }
+.btn-stop {
+  font-family: var(--sans); font-size: 0.8rem; font-weight: 700;
+  height: 30px; padding: 0 0.85rem; border-radius: 6px; border: none;
+  background: var(--red); color: #fff; cursor: pointer;
+  display: none; align-items: center;
+}
+.btn-stop:hover { opacity: 0.85; }
+.btn-stop.visible { display: inline-flex; }
 
-/* Pipeline */
-.pipeline {
-  display: flex; align-items: center; justify-content: center; gap: 0;
-  padding: 0.75rem 1.5rem;
+/* ── Steps ── */
+.steps {
+  display: flex; align-items: center; gap: 0.15rem;
+  padding: 0.65rem 1.5rem;
+  font-size: 0.68rem; font-weight: 600; color: var(--text-3);
+  text-transform: uppercase; letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--border);
   background: var(--white);
-  border-bottom: 1px solid var(--glass-border);
 }
-.step { display: flex; align-items: center; position: relative; }
-.step-node {
-  width: 26px; height: 26px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  background: var(--bg); border: 1.5px solid var(--glass-border);
-  font-size: 0.6rem; font-weight: 700; color: var(--text-dim);
-  transition: all 0.3s; z-index: 2;
-}
-.step-label {
-  position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
-  margin-top: 0.2rem; font-size: 0.55rem; font-weight: 600;
-  color: var(--text-dim); white-space: nowrap;
-  text-transform: uppercase; letter-spacing: 0.03em;
-}
-.step-connector { width: 32px; height: 1.5px; background: var(--glass-border); flex-shrink: 0; }
-.step.done .step-node { background: var(--violet); border-color: var(--violet); color: var(--white); }
-.step.done .step-label { color: var(--violet-text); }
-.step.done + .step-connector { background: var(--violet); }
-.step.active .step-node { background: var(--violet-light); border-color: var(--violet); color: var(--violet); }
-.step.active .step-label { color: var(--violet); }
+.steps .s { display: flex; align-items: center; gap: 0.15rem; transition: color 0.2s; }
+.steps .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); transition: background 0.2s; flex-shrink: 0; }
+.steps .arr { margin: 0 0.3rem; color: var(--border); }
+.steps .s.done { color: var(--violet-text); }
+.steps .s.done .dot { background: var(--violet); }
+.steps .s.active { color: var(--violet); }
+.steps .s.active .dot { background: var(--violet); box-shadow: 0 0 0 3px var(--violet-light); }
 
-/* Layout */
-.layout {
-  display: grid; grid-template-columns: 340px 1fr;
-  gap: 1rem; padding: 1rem 1.5rem;
-  min-height: calc(100vh - 105px);
-}
+/* ── Main area ── */
+.main { display: flex; gap: 0; min-height: calc(100vh - 96px); }
 
-/* Glass pane */
-.pane {
-  background: var(--glass);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
-  border-radius: 10px;
-  padding: 1rem;
+/* ── Log sidebar ── */
+.log {
+  width: var(--log-width, 280px); flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  background: var(--white);
   display: flex; flex-direction: column;
+  overflow: hidden;
+  min-width: 160px; max-width: 50vw;
 }
-.pane-title {
-  font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.05em; color: var(--text-secondary);
-  margin-bottom: 0.5rem;
+.log-head {
+  padding: 0.6rem 1rem;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--border);
 }
+.log-title { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-2); }
+.log-meta { font-size: 0.6rem; font-family: var(--mono); color: var(--text-3); }
+.log-welcome {
+  padding: 0.75rem 1rem;
+  font-size: 0.78rem; color: var(--text-2); line-height: 1.55;
+}
+.log-body {
+  flex: 1; overflow-y: auto;
+  padding: 0.4rem 1rem;
+  font-family: var(--mono); font-size: 0.68rem; line-height: 1.55;
+}
+.log-body::-webkit-scrollbar { width: 2px; }
+.log-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.ll { padding: 1px 0; color: var(--text-2); }
+.ll.success { color: var(--green); }
+.ll.warning { color: var(--yellow); }
+.ll.error { color: var(--red); }
+.ll.info { color: var(--text); }
 
-/* Left pane: controls + log */
-.left-pane { gap: 0.75rem; overflow: hidden; }
-.welcome-msg {
-  font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;
-  padding: 0.5rem 0;
+/* ── Resize handle ── */
+.resize-handle {
+  width: 5px; cursor: col-resize; flex-shrink: 0;
+  background: transparent; position: relative;
+  transition: background 0.15s;
 }
-.console-body {
-  flex: 1; overflow-y: auto; font-family: var(--mono); font-size: 0.72rem;
-  background: var(--white); border-radius: 6px; padding: 0.5rem 0.6rem;
-  line-height: 1.5; border: 1px solid var(--glass-border);
-  min-height: 80px;
+.resize-handle:hover, .resize-handle.dragging { background: var(--violet-light); }
+.resize-handle::after {
+  content: ''; position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 3px; height: 24px; border-radius: 2px;
+  background: var(--border); transition: background 0.15s;
 }
-.console-body::-webkit-scrollbar { width: 4px; }
-.console-body::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 2px; }
-.log-line { padding: 0.05rem 0; color: var(--text-secondary); }
-.log-line.success { color: var(--success); }
-.log-line.warning { color: var(--warning); }
-.log-line.error { color: var(--fail); }
-.log-line.info { color: var(--text); }
-.console-badge {
-  font-size: 0.6rem; font-weight: 500; color: var(--text-dim);
-  font-family: var(--mono); float: right;
-}
+.resize-handle:hover::after, .resize-handle.dragging::after { background: var(--violet); }
 
-/* Right pane: output */
-.right-pane { overflow: hidden; }
-.output-toolbar {
+/* ── Output area ── */
+.output { flex: 1; display: flex; flex-direction: column; background: var(--white); min-width: 0; }
+.output-bar {
   display: flex; align-items: center; gap: 0.4rem;
-  margin-bottom: 0.5rem; flex-wrap: wrap;
+  padding: 0.5rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
 }
-.output-tabs { display: flex; gap: 0; }
-.output-tab {
-  font-family: var(--sans); font-size: 0.7rem; font-weight: 600;
-  padding: 0.3rem 0.7rem; border: 1px solid var(--glass-border);
-  background: var(--white); color: var(--text-secondary); cursor: pointer;
-}
-.output-tab:first-child { border-radius: 5px 0 0 5px; }
-.output-tab:last-child { border-radius: 0 5px 5px 0; }
-.output-tab.active { background: var(--violet); color: var(--white); border-color: var(--violet); }
-.output-tab:hover:not(.active) { color: var(--text); }
-.output-files { display: flex; gap: 0.25rem; flex: 1; overflow-x: auto; }
-.file-chip {
-  font-family: var(--mono); font-size: 0.6rem; font-weight: 500;
-  padding: 0.2rem 0.45rem; border-radius: 4px;
-  background: var(--white); color: var(--text-dim); border: 1px solid var(--glass-border);
+.tab { font-family: var(--sans); font-size: 0.72rem; font-weight: 600; padding: 0.2rem 0; margin-right: 0.75rem; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-3); cursor: pointer; }
+.tab.active { color: var(--violet); border-bottom-color: var(--violet); }
+.tab:hover:not(.active) { color: var(--text-2); }
+.chips { display: flex; gap: 0.25rem; flex: 1; overflow-x: auto; }
+.chip {
+  font-family: var(--mono); font-size: 0.58rem;
+  padding: 0.15rem 0.4rem; border-radius: 4px;
+  background: var(--bg); color: var(--text-3); border: none;
   cursor: pointer; white-space: nowrap;
 }
-.file-chip:hover { border-color: var(--violet); color: var(--text-secondary); }
-.file-chip.active { border-color: var(--violet); color: var(--violet-text); background: var(--violet-light); }
-.output-actions { display: flex; gap: 0.25rem; }
-.btn-sm {
-  font-family: var(--sans); font-size: 0.7rem; font-weight: 600;
-  padding: 0.3rem 0.6rem; border-radius: 5px;
-  border: 1px solid var(--glass-border); background: var(--white);
-  color: var(--text-secondary); cursor: pointer;
+.chip:hover { color: var(--text-2); }
+.chip.active { background: var(--violet-light); color: var(--violet-text); }
+.out-btns { display: flex; gap: 0.25rem; }
+.btn-s {
+  font-family: var(--sans); font-size: 0.68rem; font-weight: 600;
+  padding: 0.2rem 0.5rem; border-radius: 4px;
+  border: 1px solid var(--border); background: var(--white);
+  color: var(--text-2); cursor: pointer;
 }
-.btn-sm:hover { border-color: var(--violet); color: var(--violet-text); }
-.btn-sm.saved { border-color: var(--success); color: var(--success); }
-.output-body {
-  flex: 1; overflow-y: auto;
-  background: var(--white); border: 1px solid var(--glass-border); border-radius: 8px;
-}
-.output-body::-webkit-scrollbar { width: 4px; }
-.output-body::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 2px; }
-#output-editor {
-  width: 100%; height: 100%; min-height: 300px;
-  background: transparent; color: var(--text); border: none;
-  font-family: var(--mono); font-size: 0.75rem; line-height: 1.6;
-  padding: 0.8rem; resize: none; outline: none;
-}
-#output-preview { padding: 0.9rem; font-size: 0.85rem; line-height: 1.7; }
-#output-preview h1 { font-size: 1.2rem; font-weight: 800; color: var(--text); margin-bottom: 0.5rem; }
-#output-preview h2 { font-size: 1rem; font-weight: 700; color: var(--violet-text); margin-top: 1.1rem; margin-bottom: 0.35rem; border-bottom: 1px solid var(--glass-border); padding-bottom: 0.2rem; }
-#output-preview p { margin-bottom: 0.45rem; }
-#output-preview strong { color: var(--text); }
-#output-preview a { color: var(--violet); }
-#output-preview hr { border: none; border-top: 1px solid var(--glass-border); margin: 0.9rem 0; }
-#output-preview table { width: 100%; border-collapse: collapse; margin: 0.5rem 0; font-size: 0.75rem; }
-#output-preview th { background: var(--bg); padding: 0.3rem 0.45rem; text-align: left; font-weight: 600; color: var(--text-secondary); border: 1px solid var(--glass-border); }
-#output-preview td { padding: 0.3rem 0.45rem; border: 1px solid var(--glass-border); }
-#output-preview ol, #output-preview ul { padding-left: 1.3rem; margin-bottom: 0.45rem; }
-#output-preview li { margin-bottom: 0.2rem; }
-#output-preview code { background: var(--bg); padding: 0.1rem 0.2rem; border-radius: 3px; font-family: var(--mono); font-size: 0.85em; }
-.output-empty { color: var(--text-dim); font-style: italic; text-align: center; padding: 3rem 1rem; font-size: 0.82rem; }
+.btn-s:hover { border-color: var(--violet); color: var(--violet-text); }
+.btn-s.saved { border-color: var(--green); color: var(--green); }
 
-@media (max-width: 768px) {
-  .layout { grid-template-columns: 1fr; }
-  .header { flex-wrap: wrap; }
-  .header-controls { width: 100%; }
+.output-body { flex: 1; overflow-y: auto; }
+.output-body::-webkit-scrollbar { width: 2px; }
+.output-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+#output-editor {
+  width: 100%; height: 100%; min-height: 400px;
+  background: transparent; color: var(--text); border: none;
+  font-family: var(--mono); font-size: 0.72rem; line-height: 1.65;
+  padding: 1.25rem; resize: none; outline: none;
+}
+#output-preview {
+  padding: 1.25rem; font-size: 0.85rem; line-height: 1.75;
+  max-width: 720px;
+}
+#output-preview h1 { font-size: 1.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+#output-preview h2 { font-size: 1rem; font-weight: 700; color: var(--violet-text); margin-top: 1.2rem; margin-bottom: 0.35rem; }
+#output-preview h3 { font-size: 0.9rem; font-weight: 700; margin-top: 1rem; margin-bottom: 0.3rem; }
+#output-preview p { margin-bottom: 0.5rem; }
+#output-preview strong { color: var(--text); }
+#output-preview a { color: var(--violet); text-decoration: none; }
+#output-preview a:hover { text-decoration: underline; }
+#output-preview hr { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
+#output-preview table { width: 100%; border-collapse: collapse; margin: 0.5rem 0; font-size: 0.75rem; }
+#output-preview th { background: var(--bg); padding: 0.3rem 0.5rem; text-align: left; font-weight: 600; color: var(--text-2); border: 1px solid var(--border); }
+#output-preview td { padding: 0.3rem 0.5rem; border: 1px solid var(--border); }
+#output-preview ol, #output-preview ul { padding-left: 1.3rem; margin-bottom: 0.5rem; }
+#output-preview li { margin-bottom: 0.2rem; }
+#output-preview code { background: var(--bg); padding: 0.1rem 0.25rem; border-radius: 3px; font-family: var(--mono); font-size: 0.85em; }
+.output-empty { color: var(--text-3); text-align: center; padding: 3rem 1rem; font-size: 0.82rem; }
+
+/* ── Feedback ── */
+.feedback {
+  border-top: 1px solid var(--border);
+  background: var(--white);
+  padding: 0.5rem 1.25rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.feedback-label { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-3); flex-shrink: 0; }
+.feedback-input {
+  flex: 1; font-family: var(--sans); font-size: 0.78rem;
+  padding: 0.3rem 0.5rem; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--bg);
+  color: var(--text); outline: none; resize: none; min-height: 28px;
+}
+.feedback-input::placeholder { color: var(--text-3); }
+.feedback-input:focus { border-color: var(--violet); }
+.btn-send {
+  font-family: var(--sans); font-size: 0.72rem; font-weight: 600;
+  padding: 0.25rem 0.6rem; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--white); color: var(--text-2); cursor: pointer;
+}
+.btn-send:hover { border-color: var(--violet); color: var(--violet-text); }
+.btn-send.sent { border-color: var(--green); color: var(--green); }
+
+@media (max-width: 720px) {
+  .log, .resize-handle { display: none; }
+  .topbar { flex-wrap: wrap; height: auto; padding: 0.5rem 1rem; }
+  .controls { width: 100%; }
 }
 </style>
 </head>
 <body>
 
-<header class="header">
+<div class="topbar">
   <div class="logo">
-    <svg viewBox="0 0 100 100" width="26" height="26">
+    <svg viewBox="0 0 100 100" width="22" height="22">
       <rect width="100" height="100" rx="26" fill="#5B3DF5"/>
       <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="9">
         <path stroke="#FFF" d="M24 46L80 46"/><path stroke="#FFF" d="M20 66L76 66"/>
@@ -222,193 +249,210 @@ input[type="text"] { width: 150px; }
     </svg>
     <div class="logo-text">Trend<span>Hacker</span></div>
   </div>
-  <div class="header-controls">
-    <div class="field">
-      <label>Brand</label>
-      <select id="brand-select"></select>
-    </div>
-    <div class="field">
-      <label>Niche (optional)</label>
-      <input type="text" id="niche-input" placeholder="e.g. AI and Tech">
-    </div>
+  <div class="controls">
+    <select class="ctrl-field" id="brand-select"><option value="">Brand...</option></select>
+    <input class="ctrl-field w-niche" type="text" id="niche-input" placeholder="Niche">
+    <input class="ctrl-field w-url" type="text" id="url-input" placeholder="Brand URL">
     <button class="btn-run" id="btn-run" onclick="runAgent()">
-      <span class="play-icon">&#9654;</span>
-      <span class="spinner"></span>
-      Run
+      <span class="play">Run</span>
+      <span class="spin"></span>
     </button>
+    <button class="btn-stop" id="btn-stop" onclick="stopAgent()">Stop</button>
   </div>
-</header>
-
-<div class="pipeline">
-  <div class="step" data-step="searching"><div class="step-node">1</div><span class="step-label">Search</span></div>
-  <div class="step-connector"></div>
-  <div class="step" data-step="filtering"><div class="step-node">2</div><span class="step-label">Filter</span></div>
-  <div class="step-connector"></div>
-  <div class="step" data-step="enriching"><div class="step-node">3</div><span class="step-label">Enrich</span></div>
-  <div class="step-connector"></div>
-  <div class="step" data-step="writing"><div class="step-node">4</div><span class="step-label">Write</span></div>
-  <div class="step-connector"></div>
-  <div class="step" data-step="reviewing"><div class="step-node">5</div><span class="step-label">Review</span></div>
-  <div class="step-connector"></div>
-  <div class="step" data-step="saving"><div class="step-node">6</div><span class="step-label">Done</span></div>
 </div>
 
-<div class="layout">
-  <!-- Left: controls + agent log -->
-  <div class="pane left-pane">
-    <div class="pane-title">Agent Log <span class="console-badge" id="api-calls-badge">0 api calls</span></div>
-    <div class="welcome-msg" id="welcome-msg">Select a brand and hit Run. The agent will search for trending topics, filter for brand safety, enrich with research, draft posts, and self-review.</div>
-    <div class="console-body" id="console"></div>
+<div class="steps" id="steps">
+  <div class="s" data-step="searching"><span class="dot"></span> Search</div>
+  <span class="arr">/</span>
+  <div class="s" data-step="filtering"><span class="dot"></span> Filter</div>
+  <span class="arr">/</span>
+  <div class="s" data-step="enriching"><span class="dot"></span> Enrich</div>
+  <span class="arr">/</span>
+  <div class="s" data-step="writing"><span class="dot"></span> Write</div>
+  <span class="arr">/</span>
+  <div class="s" data-step="reviewing"><span class="dot"></span> Review</div>
+  <span class="arr">/</span>
+  <div class="s" data-step="saving"><span class="dot"></span> Done</div>
+</div>
+
+<div class="main">
+
+  <div class="log" id="log-panel">
+    <div class="log-head">
+      <span class="log-title">Log</span>
+      <span class="log-meta" id="api-badge">0 calls</span>
+    </div>
+    <div class="log-welcome" id="welcome">Pick a brand and run the agent.</div>
+    <div class="log-body" id="console"></div>
   </div>
 
-  <!-- Right: output viewer/editor -->
-  <div class="pane right-pane">
-    <div class="output-toolbar">
-      <div class="output-tabs">
-        <button class="output-tab active" onclick="setOutputMode('preview')">Preview</button>
-        <button class="output-tab" onclick="setOutputMode('edit')">Edit</button>
-      </div>
-      <div class="output-files" id="output-files"></div>
-      <div class="output-actions" id="output-actions" style="display:none">
-        <button class="btn-sm" id="btn-save" onclick="saveOutput()">Save</button>
-        <button class="btn-sm" id="btn-download" onclick="downloadOutput()">Download .md</button>
+  <div class="resize-handle" id="resize-handle"></div>
+
+  <div class="output">
+    <div class="output-bar">
+      <button class="tab active" onclick="setMode('preview')">Preview</button>
+      <button class="tab" onclick="setMode('edit')">Edit</button>
+      <div class="chips" id="files"></div>
+      <div class="out-btns" id="out-btns" style="display:none">
+        <button class="btn-s" id="btn-save" onclick="saveOutput()">Save</button>
+        <button class="btn-s" onclick="downloadOutput()">Download</button>
       </div>
     </div>
-    <div class="output-body" id="output-body">
-      <div class="output-empty" id="output-empty">Run the agent or select a previous output to view</div>
+    <div class="output-body">
+      <div class="output-empty" id="empty">Run the agent or select a previous output</div>
       <div id="output-preview" style="display:none"></div>
       <textarea id="output-editor" style="display:none" spellcheck="false"></textarea>
     </div>
+    <div class="feedback">
+      <span class="feedback-label">Feedback</span>
+      <input class="feedback-input" type="text" id="feedback-input" placeholder="Tell the agent what to improve next time...">
+      <button class="btn-send" id="btn-send" onclick="sendFeedback()">Send</button>
+    </div>
   </div>
+
 </div>
 
 <script>
-let currentOutput = '';
-let currentFilename = '';
-let outputMode = 'preview';
-let apiCalls = 0;
-let evtSource = null;
+let currentOutput = '', currentFilename = '', outputMode = 'preview', apiCalls = 0, evtSource = null;
 
-document.addEventListener('DOMContentLoaded', () => { loadBrands(); loadOutputFiles(); });
+document.addEventListener('DOMContentLoaded', () => { loadBrands(); loadFiles(); initResize(); });
 
 async function loadBrands() {
   try {
-    const res = await fetch('/api/brands');
-    const brands = await res.json();
-    const sel = document.getElementById('brand-select');
-    brands.forEach(b => { const opt = document.createElement('option'); opt.value = b; opt.textContent = b; sel.appendChild(opt); });
+    const b = await (await fetch('/api/brands')).json();
+    const s = document.getElementById('brand-select');
+    b.forEach(n => { const o = document.createElement('option'); o.value = n; o.textContent = n; s.appendChild(o); });
   } catch(e) {}
 }
 
-async function loadOutputFiles() {
+async function loadFiles() {
   try {
-    const res = await fetch('/api/outputs');
-    const files = await res.json();
-    const c = document.getElementById('output-files');
-    c.innerHTML = '';
-    files.forEach(f => {
-      const chip = document.createElement('button');
-      chip.className = 'file-chip'; chip.textContent = f;
-      chip.onclick = () => loadFile(f);
-      c.appendChild(chip);
+    const f = await (await fetch('/api/outputs')).json();
+    const c = document.getElementById('files'); c.innerHTML = '';
+    f.forEach(n => {
+      const b = document.createElement('button'); b.className = 'chip'; b.textContent = n;
+      b.onclick = () => loadFile(n); c.appendChild(b);
     });
   } catch(e) {}
 }
 
-async function loadFile(filename) {
+async function loadFile(name) {
   try {
-    const res = await fetch(`/api/output/${filename}`);
-    const data = await res.json();
-    currentOutput = data.content; currentFilename = filename;
-    showOutput(currentOutput);
-    document.querySelectorAll('.file-chip').forEach(c => c.classList.toggle('active', c.textContent === filename));
-    document.getElementById('output-actions').style.display = '';
+    const d = await (await fetch(`/api/output/${name}`)).json();
+    currentOutput = d.content; currentFilename = name;
+    show(currentOutput);
+    document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.textContent === name));
+    document.getElementById('out-btns').style.display = '';
   } catch(e) {}
 }
 
 function runAgent() {
   const brand = document.getElementById('brand-select').value;
   const niche = document.getElementById('niche-input').value;
-  if (!brand) return;
+  const url = document.getElementById('url-input').value;
+
+  document.getElementById('brand-select').classList.remove('invalid');
+  document.getElementById('url-input').classList.remove('invalid');
+
+  if (!brand && !url.trim()) {
+    document.getElementById('brand-select').classList.add('invalid');
+    document.getElementById('url-input').classList.add('invalid');
+    log('Provide a brand name or brand URL to start.', 'error');
+    document.getElementById('welcome').style.display = 'none';
+    return;
+  }
+
   const btn = document.getElementById('btn-run');
   btn.classList.add('running'); btn.disabled = true;
-  apiCalls = 0; updateApiCallsBadge();
-  document.getElementById('welcome-msg').style.display = 'none';
+  document.getElementById('btn-stop').classList.add('visible');
+  apiCalls = 0; badge();
+  document.getElementById('welcome').style.display = 'none';
   document.getElementById('console').innerHTML = '';
-  resetPipeline();
+  resetSteps();
 
-  const params = new URLSearchParams({brand, niche});
-  evtSource = new EventSource(`/api/run?${params}`);
+  const p = new URLSearchParams({brand, niche, brand_url: url});
+  evtSource = new EventSource(`/api/run?${p}`);
 
-  evtSource.addEventListener('step', e => { const d = JSON.parse(e.data); setPipelineStep(d.step); addLog(d.message, 'info'); });
-  evtSource.addEventListener('log', e => { const d = JSON.parse(e.data); addLog(d.message, d.type || 'info'); });
+  evtSource.addEventListener('step', e => { const d = JSON.parse(e.data); setStep(d.step); log(d.message, 'info'); });
+  evtSource.addEventListener('log', e => { const d = JSON.parse(e.data); log(d.message, d.type || 'info'); });
   evtSource.addEventListener('trends', e => {
-    const trends = JSON.parse(e.data); apiCalls += 3; updateApiCallsBadge();
-    trends.slice(0, 5).forEach((t, i) => addLog(`${i+1}. ${t.title} (${t.source})`, 'info'));
-    if (trends.length > 5) addLog(`... and ${trends.length - 5} more`, 'info');
+    const t = JSON.parse(e.data); apiCalls += 3; badge();
+    t.slice(0, 5).forEach((x, i) => log(`${i+1}. ${x.title}`, 'info'));
+    if (t.length > 5) log(`+${t.length - 5} more`, 'info');
   });
-  evtSource.addEventListener('selected', () => { apiCalls += 1; updateApiCallsBadge(); });
+  evtSource.addEventListener('selected', () => { apiCalls++; badge(); });
   evtSource.addEventListener('enrichment', e => {
-    const d = JSON.parse(e.data); apiCalls += 4; updateApiCallsBadge();
-    if (d.hashtags && d.hashtags.length) addLog(`Hashtags: ${d.hashtags.slice(0, 5).join(' ')}`, 'info');
+    const d = JSON.parse(e.data); apiCalls += 4; badge();
+    if (d.hashtags?.length) log(d.hashtags.slice(0, 5).join(' '), 'info');
   });
-  evtSource.addEventListener('posts', () => { apiCalls += 1; updateApiCallsBadge(); });
-  evtSource.addEventListener('review', () => { apiCalls += 1; updateApiCallsBadge(); });
-  evtSource.addEventListener('rewrite', e => { const d = JSON.parse(e.data); apiCalls += 1; updateApiCallsBadge(); addLog(`Rewrote ${d.platform} post (attempt ${d.attempt})`, 'warning'); });
+  evtSource.addEventListener('posts', () => { apiCalls++; badge(); });
+  evtSource.addEventListener('review', () => { apiCalls++; badge(); });
+  evtSource.addEventListener('rewrite', e => { const d = JSON.parse(e.data); apiCalls++; badge(); log(`Rewrote ${d.platform}`, 'warning'); });
   evtSource.addEventListener('complete', e => {
     const d = JSON.parse(e.data); currentOutput = d.output; currentFilename = d.filename;
-    showOutput(d.output); addLog(`Done — saved to ${d.filename}`, 'success');
-    document.getElementById('output-actions').style.display = ''; finish(); loadOutputFiles();
+    show(d.output); log(`Done — ${d.filename}`, 'success');
+    document.getElementById('out-btns').style.display = ''; done(); loadFiles();
   });
-  evtSource.addEventListener('error', e => { if (e.data) { const d = JSON.parse(e.data); addLog(`Error: ${d.message}`, 'error'); } finish(); });
-  evtSource.onerror = () => { finish(); };
+  evtSource.addEventListener('error', e => { if (e.data) log(JSON.parse(e.data).message, 'error'); done(); });
+  evtSource.onerror = () => done();
 }
 
-function finish() { if (evtSource) { evtSource.close(); evtSource = null; } const btn = document.getElementById('btn-run'); btn.classList.remove('running'); btn.disabled = false; }
-
-function resetPipeline() {
-  document.querySelectorAll('.step').forEach(s => s.classList.remove('active','done'));
-  document.querySelectorAll('.step-connector').forEach(c => c.style.background = '');
+function stopAgent() {
+  if (evtSource) {
+    evtSource.close(); evtSource = null;
+    log('Stopped by user.', 'warning');
+  }
+  done();
 }
 
-function setPipelineStep(step) {
-  const steps = document.querySelectorAll('.step');
-  const conns = document.querySelectorAll('.step-connector');
+function done() {
+  if (evtSource) { evtSource.close(); evtSource = null; }
+  const b = document.getElementById('btn-run');
+  b.classList.remove('running'); b.disabled = false;
+  document.getElementById('btn-stop').classList.remove('visible');
+}
+
+function resetSteps() { document.querySelectorAll('.s').forEach(s => s.classList.remove('active','done')); }
+
+function setStep(step) {
+  const ss = document.querySelectorAll('.s');
   let found = false;
-  steps.forEach((el, i) => {
+  ss.forEach(el => {
     if (el.dataset.step === step) { el.classList.remove('done'); el.classList.add('active'); found = true; }
-    else if (!found) { el.classList.remove('active'); el.classList.add('done'); if (conns[i]) conns[i].style.background = 'var(--violet)'; }
+    else if (!found) { el.classList.remove('active'); el.classList.add('done'); }
     else { el.classList.remove('active','done'); }
   });
-  if (step === 'saving') { steps.forEach(el => { el.classList.remove('active'); el.classList.add('done'); }); conns.forEach(c => c.style.background = 'var(--violet)'); }
+  if (step === 'saving') ss.forEach(el => { el.classList.remove('active'); el.classList.add('done'); });
 }
 
-function addLog(msg, type) {
+function log(msg, type) {
   const el = document.getElementById('console');
-  const line = document.createElement('div'); line.className = `log-line ${type || ''}`; line.textContent = msg;
-  el.appendChild(line); el.scrollTop = el.scrollHeight;
+  const d = document.createElement('div'); d.className = `ll ${type||''}`; d.textContent = msg;
+  el.appendChild(d); el.scrollTop = el.scrollHeight;
 }
 
-function updateApiCallsBadge() { document.getElementById('api-calls-badge').textContent = `${apiCalls} api calls`; }
+function badge() { document.getElementById('api-badge').textContent = `${apiCalls} calls`; }
 
-function showOutput(content) {
+function show(content) {
   currentOutput = content;
-  document.getElementById('output-empty').style.display = 'none';
+  document.getElementById('empty').style.display = 'none';
   if (outputMode === 'preview') {
-    document.getElementById('output-preview').style.display = ''; document.getElementById('output-editor').style.display = 'none';
+    document.getElementById('output-preview').style.display = '';
+    document.getElementById('output-editor').style.display = 'none';
     document.getElementById('output-preview').innerHTML = marked.parse(content);
   } else {
-    document.getElementById('output-preview').style.display = 'none'; document.getElementById('output-editor').style.display = '';
+    document.getElementById('output-preview').style.display = 'none';
+    document.getElementById('output-editor').style.display = '';
     document.getElementById('output-editor').value = content;
   }
 }
 
-function setOutputMode(mode) {
+function setMode(mode) {
   outputMode = mode;
-  document.querySelectorAll('.output-tab').forEach((t, i) => t.classList.toggle('active', (mode === 'preview' && i === 0) || (mode === 'edit' && i === 1)));
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', (mode === 'preview' && i === 0) || (mode === 'edit' && i === 1)));
   if (mode === 'edit') document.getElementById('output-editor').value = currentOutput;
   if (mode === 'preview' && document.getElementById('output-editor').style.display !== 'none') currentOutput = document.getElementById('output-editor').value;
-  if (currentOutput) showOutput(currentOutput);
+  if (currentOutput) show(currentOutput);
 }
 
 async function saveOutput() {
@@ -416,18 +460,56 @@ async function saveOutput() {
   if (outputMode === 'edit') currentOutput = document.getElementById('output-editor').value;
   try {
     await fetch(`/api/output/${currentFilename}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({content: currentOutput}) });
-    const btn = document.getElementById('btn-save'); btn.textContent = 'Saved'; btn.classList.add('saved');
-    setTimeout(() => { btn.textContent = 'Save'; btn.classList.remove('saved'); }, 1500);
+    const b = document.getElementById('btn-save'); b.textContent = 'Saved'; b.classList.add('saved');
+    setTimeout(() => { b.textContent = 'Save'; b.classList.remove('saved'); }, 1500);
   } catch(e) {}
 }
 
 function downloadOutput() {
   if (!currentOutput) return;
   if (outputMode === 'edit') currentOutput = document.getElementById('output-editor').value;
-  const blob = new Blob([currentOutput], {type: 'text/markdown'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = currentFilename || 'trendhacker-output.md';
-  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  const b = new Blob([currentOutput], {type: 'text/markdown'});
+  const u = URL.createObjectURL(b);
+  const a = document.createElement('a'); a.href = u; a.download = currentFilename || 'output.md';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(u);
+}
+
+async function sendFeedback() {
+  const inp = document.getElementById('feedback-input');
+  const text = inp.value.trim();
+  if (!text) return;
+  try {
+    await fetch('/api/feedback', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({feedback: text, output_file: currentFilename}) });
+    const b = document.getElementById('btn-send'); b.textContent = 'Sent'; b.classList.add('sent');
+    inp.value = '';
+    setTimeout(() => { b.textContent = 'Send'; b.classList.remove('sent'); }, 1500);
+  } catch(e) {}
+}
+
+function initResize() {
+  const handle = document.getElementById('resize-handle');
+  const panel = document.getElementById('log-panel');
+  let startX, startW;
+
+  handle.addEventListener('mousedown', e => {
+    e.preventDefault();
+    startX = e.clientX;
+    startW = panel.offsetWidth;
+    handle.classList.add('dragging');
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  });
+
+  function onMove(e) {
+    const w = Math.max(160, Math.min(window.innerWidth * 0.5, startW + (e.clientX - startX)));
+    panel.style.width = w + 'px';
+  }
+
+  function onUp() {
+    handle.classList.remove('dragging');
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onUp);
+  }
 }
 </script>
 </body>

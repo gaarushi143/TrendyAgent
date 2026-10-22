@@ -118,10 +118,14 @@ Result {i}:
     # The system prompt tells Claude its role and exactly what we need back.
     # We ask for JSON so we can parse the response programmatically.
     system_prompt = """You are a trend analyst for a brand's social media team.
-Your job is to evaluate search results and pick the ONE best trending topic
-that the brand can safely and naturally tie into a social media post.
+Your job is to evaluate search results, identify the actual trending topics hidden
+inside article headlines, and pick the ONE best topic for the brand.
 
-You must evaluate each result against these criteria:
+Many search results are articles ABOUT trends (e.g. "Top 10 Fitness Trends for 2026").
+Your job is to extract the actual underlying trends (e.g. "AI-Powered Fitness Coaching",
+"Cold Plunge Recovery") — not repeat article headlines.
+
+You must evaluate each trend against these criteria:
 1. RELEVANCE — Is it actually about the given niche? Skip generic or off-topic results.
 2. FRESHNESS — Is it trending right now? Prefer breaking news and hot takes over evergreen content.
 3. BRAND SAFETY — Read the brand guidelines carefully. Skip anything touching the brand's "Topics to Avoid" list. Skip anything negative, controversial, or divisive.
@@ -129,11 +133,20 @@ You must evaluate each result against these criteria:
 
 Respond with ONLY a JSON object (no markdown, no code fences) in this exact format:
 {
-    "trend_title": "Short headline of the trend",
+    "trend_title": "Short name of the trend (NOT an article headline)",
     "trend_summary": "1-2 sentence summary of what's trending and why",
     "source_url": "The link from the search result you chose",
-    "reasoning": "One sentence explaining why this trend is the best pick for this brand"
-}"""
+    "reasoning": "One sentence explaining why this trend is the best pick for this brand",
+    "top_trends": [
+        {"name": "Trend Name", "context": "One sentence on what this trend is about"},
+        {"name": "Trend Name", "context": "One sentence on what this trend is about"}
+    ]
+}
+
+top_trends: Extract up to 10 distinct trending TOPICS you identified across all the search
+results. Each "name" should be the actual trend topic (2-5 words), NOT the article headline.
+Each "context" is a one-sentence explanation. Rank by relevance to the niche. Include the
+trend you selected as #1."""
 
     # The user message gives Claude the niche, the brand guidelines, and
     # the raw search results — everything it needs to make a decision.
@@ -150,7 +163,7 @@ Pick the single best trend for this brand to post about. Respond with JSON only.
     # Call Claude's Messages API
     response = get_client().messages.create(
         model=MODEL,
-        max_tokens=1024,
+        max_tokens=2048,
         system=system_prompt,
         messages=[{"role": "user", "content": user_message}],
     )

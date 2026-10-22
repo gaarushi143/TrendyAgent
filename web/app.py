@@ -93,18 +93,48 @@ def save_output(filename):
     return jsonify({"ok": True})
 
 
+@app.route("/api/feedback", methods=["POST"])
+def save_feedback():
+    data = request.get_json()
+    feedback_dir = PROJECT_ROOT / "feedback"
+    feedback_dir.mkdir(exist_ok=True)
+    filename = f"feedback_{date.today().isoformat()}.md"
+    filepath = feedback_dir / filename
+    entry = f"\n---\n\n**Date:** {date.today().isoformat()}\n"
+    if data.get("output_file"):
+        entry += f"**Output:** {data['output_file']}\n"
+    entry += f"\n{data.get('feedback', '')}\n"
+    with open(filepath, "a") as f:
+        f.write(entry)
+    return jsonify({"ok": True})
+
+
 @app.route("/api/run")
 def run_agent():
-    brand = request.args.get("brand", "acme")
+    brand = request.args.get("brand", "")
     niche = request.args.get("niche", "")
     brand_file = request.args.get("brand_file", "")
+    brand_url = request.args.get("brand_url", "")
 
     @stream_with_context
     def generate():
         try:
             yield _sse("step", {"step": "loading", "message": "Loading brand guidelines..."})
-            brand_guidelines = _load_brand_guidelines(brand, brand_file or None)
-            yield _sse("log", {"message": f"Loaded brand: {brand}", "type": "success"})
+            if brand:
+                brand_guidelines = _load_brand_guidelines(brand, brand_file or None)
+                yield _sse("log", {"message": f"Loaded brand: {brand}", "type": "success"})
+            elif brand_url:
+                brand_guidelines = (
+                    f"# Brand\n\n"
+                    f"**Website:** {brand_url}\n\n"
+                    f"Use the brand's website URL as context for tone and audience. "
+                    f"Keep posts professional, positive, and on-brand. "
+                    f"Avoid controversial or divisive topics.\n"
+                )
+                yield _sse("log", {"message": f"Using URL: {brand_url}", "type": "success"})
+            else:
+                yield _sse("error", {"message": "Provide a brand name or brand URL."})
+                return
 
             niche_val = niche if niche else None
             niche_label = niche or "General"
@@ -213,12 +243,23 @@ def run_agent():
             output += "---\n\n"
             output += posts_markdown
             output += "\n\n---\n\n"
-            output += "## All Trending Topics Found\n\n"
-            for i, r in enumerate(top_results, 1):
-                output += f"{i}. **{r['title']}**\n"
-                output += f"   - Source: {r['source']}\n"
-                output += f"   - {r['snippet']}\n"
-                output += f"   - [Read more]({r['link']})\n\n"
+            output += "## Top Trending Topics\n\n"
+            top_trends = trend.get("top_trends", [])
+            if top_trends:
+                for i, t in enumerate(top_trends, 1):
+                    marker = " — *Selected*" if i == 1 else ""
+                    output += f"**{i}. {t['name']}**{marker}\n\n"
+                    output += f"{t.get('context', '')}\n\n"
+                    if i == 1:
+                        if trend.get("hashtags"):
+                            output += f"Hashtags: {' '.join(trend['hashtags'])}\n\n"
+                        if trend.get("trajectory"):
+                            output += f"Trajectory: {trend['trajectory']}\n\n"
+            else:
+                for i, r in enumerate(top_results, 1):
+                    output += f"**{i}. {r['title']}**\n\n"
+                    output += f"{r['snippet']}\n\n"
+                    output += f"*Source: {r['source']}* — [Read more]({r['link']})\n\n"
 
             output_dir = PROJECT_ROOT / "output"
             output_dir.mkdir(exist_ok=True)
@@ -242,4 +283,5 @@ def run_agent():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5001, threaded=True)
+    port = int(os.environ.get("PORT", 5001))
+    app.run(debug=True, port=port, threaded=True)
