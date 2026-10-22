@@ -5,3 +5,4 @@ pytrends
 flask
 gunicorn
 gevent
+packaging
