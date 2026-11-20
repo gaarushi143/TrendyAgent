@@ -3,7 +3,9 @@ services:
     name: trendhacker
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn --worker-class gevent --workers 2 --bind 0.0.0.0:$PORT --timeout 120 web.app:app
+    # Threaded worker, not gevent: gevent patches SSL after gunicorn has already
+    # imported it, which crashes HTTPS calls with "maximum recursion depth exceeded".
+    startCommand: gunicorn --worker-class gthread --workers 1 --threads 8 --bind 0.0.0.0:$PORT --timeout 120 web.app:app
     envVars:
       - key: ANTHROPIC_API_KEY
         sync: false
