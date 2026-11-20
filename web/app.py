@@ -60,6 +60,12 @@ def index():
     return render_template("index.html")
 
 
+@app.route("/healthz")
+def healthz():
+    # Cheap endpoint the portfolio pings to wake the server from Render's sleep
+    return "ok"
+
+
 @app.route("/api/brands")
 def list_brands():
     brands_dir = PROJECT_ROOT / "brands"
