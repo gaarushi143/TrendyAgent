@@ -27,8 +27,8 @@ load_dotenv(dotenv_path=PROJECT_ROOT / ".env")
 
 from tools.enrich import enrich_trend
 from tools.search import search_trending
+from tools.trend_filter import filter_trends_v2
 from tools.writer import (
-    filter_trends,
     replace_post,
     review_posts,
     rewrite_post,
@@ -181,13 +181,14 @@ def run_agent():
             ])
             yield _sse("log", {"message": f"Found {len(results)} results, showing top 10", "type": "info"})
 
-            yield _sse("step", {"step": "filtering", "message": "Claude is picking the best trend..."})
-            trend = filter_trends(results, niche_label, brand_guidelines)
+            yield _sse("step", {"step": "filtering", "message": "Claude is clustering and picking trends..."})
+            trend = filter_trends_v2(results, niche_label, brand_guidelines)
             yield _sse("selected", {
                 "trend_title": trend.get("trend_title", ""),
                 "trend_summary": trend.get("trend_summary", ""),
                 "source_url": trend.get("source_url", ""),
                 "reasoning": trend.get("reasoning", ""),
+                "top_trends": trend.get("top_trends", []),
             })
             yield _sse("log", {"message": f"Selected: {trend['trend_title']}", "type": "success"})
 
