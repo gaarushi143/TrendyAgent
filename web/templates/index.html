@@ -12,6 +12,8 @@
   --violet: #5B3DF5;
   --violet-light: #F0EDFF;
   --violet-text: #4C35CC;
+  --yellow: #FFD23F;
+  --yellow-soft: #FFF8E1;
   --bg: #FAFAFA;
   --white: #FFFFFF;
   --border: #E8E6EE;
@@ -19,219 +21,441 @@
   --text-2: #6B6580;
   --text-3: #A09AAF;
   --green: #2E9E6A;
+  --green-bg: #E8F5EE;
   --red: #C44E4E;
-  --yellow: #A68B2D;
+  --red-bg: #FCEAEA;
+  --warn: #A68B2D;
+  --warn-bg: #FFF8E1;
   --mono: 'JetBrains Mono', monospace;
   --sans: 'Bricolage Grotesque', system-ui, sans-serif;
+  --radius: 10px;
 }
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 html { font-size: 15px; }
 body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; }
 
-/* ── Top bar ── */
+/* ── Topbar ── */
 .topbar {
   position: sticky; top: 0; z-index: 10;
   background: var(--white);
   border-bottom: 1px solid var(--border);
   padding: 0 1.5rem;
-  height: 48px;
-  display: flex; align-items: center; gap: 1.25rem;
+  height: 52px;
+  display: flex; align-items: center; justify-content: space-between;
 }
-.logo { display: flex; align-items: center; gap: 0.35rem; flex-shrink: 0; }
-.logo svg { width: 22px; height: 22px; }
-.logo-text { font-size: 0.95rem; font-weight: 800; letter-spacing: -0.01em; }
+.logo { display: flex; align-items: center; gap: 0.4rem; }
+.logo svg { width: 24px; height: 24px; }
+.logo-text { font-size: 1.05rem; font-weight: 800; letter-spacing: -0.02em; }
 .logo-text span { color: var(--violet); }
+.topbar-meta {
+  font-family: var(--mono); font-size: 0.72rem; color: var(--text-3);
+  display: flex; align-items: center; gap: 0.75rem;
+}
+.topbar-meta .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
 
-.controls { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; }
-.ctrl-field {
-  font-family: var(--sans); font-size: 0.8rem; font-weight: 500;
-  padding: 0.3rem 0.5rem; border-radius: 6px;
-  background: var(--bg); color: var(--text); border: 1px solid var(--border);
+/* ── Steps bar ── */
+.steps {
+  display: flex; align-items: center; gap: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--white);
+  padding: 0 1.5rem;
+}
+.step-tab {
+  position: relative;
+  padding: 0.65rem 1rem;
+  font-size: 0.72rem; font-weight: 600; letter-spacing: 0.02em;
+  color: var(--text-3);
+  cursor: default;
+  transition: color 0.2s;
+  border: none; background: none; font-family: var(--sans);
+  text-transform: uppercase;
+}
+.step-tab.done { color: var(--text-2); cursor: pointer; }
+.step-tab.done:hover { color: var(--violet-text); }
+.step-tab.done::after {
+  content: ''; position: absolute; bottom: -1px; left: 0; right: 0;
+  height: 2px; background: var(--violet); border-radius: 1px;
+}
+.step-tab.active {
+  color: var(--violet);
+}
+.step-tab.active::after {
+  content: ''; position: absolute; bottom: -1px; left: 0; right: 0;
+  height: 2px; background: var(--violet); border-radius: 1px;
+}
+.step-tab .spinner {
+  display: none; width: 10px; height: 10px;
+  border: 1.5px solid var(--border); border-top-color: var(--violet);
+  border-radius: 50%; animation: sp 0.6s linear infinite;
+  margin-right: 0.3rem; vertical-align: -1px;
+}
+.step-tab.active .spinner { display: inline-block; }
+@keyframes sp { to { transform: rotate(360deg); } }
+
+.step-sep {
+  font-size: 0.65rem; color: var(--border); margin: 0 0.1rem;
+  user-select: none;
+}
+
+/* ── Stage views ── */
+.stage-container {
+  max-width: 720px; margin: 0 auto; padding: 2rem 1.5rem;
+  min-height: calc(100vh - 100px);
+}
+.stage { display: none; }
+.stage.visible { display: block; }
+
+/* ── Input stage ── */
+.input-hero { text-align: center; padding: 2rem 0 1.5rem; }
+.input-hero h1 {
+  font-size: 1.6rem; font-weight: 800; letter-spacing: -0.03em;
+  color: var(--text); margin-bottom: 0.4rem;
+}
+.input-hero h1 .accent { color: var(--violet); }
+.input-hero p { font-size: 0.88rem; color: var(--text-2); max-width: 420px; margin: 0 auto; line-height: 1.55; }
+
+.input-fields {
+  max-width: 440px; margin: 1.5rem auto;
+  display: flex; flex-direction: column; gap: 0.75rem;
+}
+.field-row { display: flex; gap: 0.5rem; }
+.field {
+  flex: 1; padding: 0.65rem 0.85rem; border-radius: var(--radius);
+  border: 1px solid var(--border); font-size: 0.82rem;
+  font-family: var(--sans); color: var(--text); background: var(--white);
   outline: none; transition: border-color 0.15s;
 }
-.ctrl-field:focus { border-color: var(--violet); }
-.ctrl-field.invalid { border-color: var(--red); }
-select.ctrl-field { cursor: pointer; }
-.ctrl-field.w-niche { width: 120px; }
-.ctrl-field.w-url { width: 180px; }
-.btn-run {
-  font-family: var(--sans); font-size: 0.8rem; font-weight: 700;
-  height: 30px; padding: 0 0.85rem; border-radius: 6px; border: none;
-  background: var(--violet); color: #fff; cursor: pointer;
-  display: inline-flex; align-items: center; gap: 0.3rem;
-  transition: opacity 0.15s;
-}
-.btn-run:hover { opacity: 0.85; }
-.btn-run:disabled { opacity: 0.35; cursor: not-allowed; }
-.btn-run .spin { display: none; width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: sp .6s linear infinite; }
-.btn-run.running .spin { display: block; }
-.btn-run.running .play { display: none; }
-@keyframes sp { to { transform: rotate(360deg); } }
-.btn-stop {
-  font-family: var(--sans); font-size: 0.8rem; font-weight: 700;
-  height: 30px; padding: 0 0.85rem; border-radius: 6px; border: none;
-  background: var(--red); color: #fff; cursor: pointer;
-  display: none; align-items: center;
-}
-.btn-stop:hover { opacity: 0.85; }
-.btn-stop.visible { display: inline-flex; }
+.field:focus { border-color: var(--violet); }
+.field::placeholder { color: var(--text-3); }
+.field.invalid { border-color: var(--red); }
+textarea.field { resize: vertical; min-height: 60px; line-height: 1.5; }
 
-/* ── Steps ── */
-.steps {
-  display: flex; align-items: center; gap: 0.15rem;
-  padding: 0.65rem 1.5rem;
-  font-size: 0.68rem; font-weight: 600; color: var(--text-3);
-  text-transform: uppercase; letter-spacing: 0.04em;
-  border-bottom: 1px solid var(--border);
-  background: var(--white);
+.divider-line {
+  display: flex; align-items: center; gap: 0.75rem;
+  max-width: 440px; margin: 0.25rem auto;
 }
-.steps .s { display: flex; align-items: center; gap: 0.15rem; transition: color 0.2s; }
-.steps .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); transition: background 0.2s; flex-shrink: 0; }
-.steps .arr { margin: 0 0.3rem; color: var(--border); }
-.steps .s.done { color: var(--violet-text); }
-.steps .s.done .dot { background: var(--violet); }
-.steps .s.active { color: var(--violet); }
-.steps .s.active .dot { background: var(--violet); box-shadow: 0 0 0 3px var(--violet-light); }
+.divider-line hr { flex: 1; border: none; border-top: 1px solid var(--border); }
+.divider-line span { font-size: 0.7rem; color: var(--text-3); font-weight: 600; letter-spacing: 0.03em; }
 
-/* ── Main area ── */
-.main { display: flex; gap: 0; min-height: calc(100vh - 96px); }
-
-/* ── Log sidebar ── */
-.log {
-  width: var(--log-width, 280px); flex-shrink: 0;
-  border-right: 1px solid var(--border);
-  background: var(--white);
-  display: flex; flex-direction: column;
-  overflow: hidden;
-  min-width: 160px; max-width: 50vw;
+.niche-grid {
+  display: flex; flex-wrap: wrap; gap: 0.4rem;
+  justify-content: center; max-width: 480px; margin: 0.75rem auto;
 }
-.log-head {
-  padding: 0.6rem 1rem;
+.niche-pill {
+  font-size: 0.72rem; font-weight: 500; padding: 0.35rem 0.85rem;
+  border-radius: 20px; border: 1px solid var(--border);
+  color: var(--text-2); background: var(--white);
+  cursor: pointer; font-family: var(--sans); transition: all 0.15s;
+}
+.niche-pill:hover { border-color: var(--violet); color: var(--violet-text); }
+.niche-pill.selected {
+  border-color: var(--violet); color: var(--violet);
+  background: var(--violet-light);
+}
+.niche-pill.custom { border-style: dashed; }
+
+.go-btn {
+  display: block; margin: 1.5rem auto 0;
+  padding: 0.75rem 2rem; border-radius: var(--radius); border: none;
+  background: var(--violet); color: #fff;
+  font-size: 0.95rem; font-weight: 700; cursor: pointer;
+  font-family: var(--sans); transition: opacity 0.15s;
+  letter-spacing: -0.01em;
+}
+.go-btn:hover { opacity: 0.88; }
+.go-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.go-btn .spin {
+  display: none; width: 14px; height: 14px;
+  border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff;
+  border-radius: 50%; animation: sp 0.6s linear infinite;
+  vertical-align: -2px; margin-right: 0.4rem;
+}
+.go-btn.running .spin { display: inline-block; }
+.go-btn.running .play-text { display: none; }
+
+.input-footnote {
+  text-align: center; margin-top: 1rem;
+  font-size: 0.68rem; color: var(--text-3); font-family: var(--mono);
+}
+
+.prev-runs {
+  max-width: 440px; margin: 2rem auto 0;
+  border-top: 1px solid var(--border); padding-top: 1rem;
+}
+.prev-runs-title { font-size: 0.65rem; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+.prev-chips { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.prev-chip {
+  font-family: var(--mono); font-size: 0.62rem;
+  padding: 0.2rem 0.5rem; border-radius: 5px;
+  background: var(--white); color: var(--text-3); border: 1px solid var(--border);
+  cursor: pointer; transition: all 0.15s;
+}
+.prev-chip:hover { color: var(--violet-text); border-color: var(--violet); }
+.prev-chip.active { background: var(--violet-light); color: var(--violet-text); border-color: var(--violet); }
+
+/* ── Cards (shared) ── */
+.card {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 0.85rem 1rem;
+  margin-bottom: 0.65rem;
+}
+.card-head {
   display: flex; align-items: center; justify-content: space-between;
-  border-bottom: 1px solid var(--border);
+  margin-bottom: 0.5rem;
 }
-.log-title { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-2); }
-.log-meta { font-size: 0.6rem; font-family: var(--mono); color: var(--text-3); }
-.log-welcome {
-  padding: 0.75rem 1rem;
-  font-size: 0.78rem; color: var(--text-2); line-height: 1.55;
+.card-title { font-size: 0.78rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 0.4rem; }
+.card-title .icon { font-size: 0.85rem; }
+.badge {
+  font-size: 0.62rem; font-family: var(--mono); font-weight: 500;
+  padding: 0.15rem 0.5rem; border-radius: 5px;
 }
-.log-body {
-  flex: 1; overflow-y: auto;
-  padding: 0.4rem 1rem;
-  font-family: var(--mono); font-size: 0.68rem; line-height: 1.55;
-}
-.log-body::-webkit-scrollbar { width: 2px; }
-.log-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-.ll { padding: 1px 0; color: var(--text-2); }
-.ll.success { color: var(--green); }
-.ll.warning { color: var(--yellow); }
-.ll.error { color: var(--red); }
-.ll.info { color: var(--text); }
+.badge-violet { background: var(--violet-light); color: var(--violet-text); }
+.badge-green { background: var(--green-bg); color: var(--green); }
+.badge-yellow { background: var(--warn-bg); color: var(--warn); }
+.badge-red { background: var(--red-bg); color: var(--red); }
 
-/* ── Resize handle ── */
-.resize-handle {
-  width: 5px; cursor: col-resize; flex-shrink: 0;
-  background: transparent; position: relative;
-  transition: background 0.15s;
+.info-line {
+  display: flex; align-items: flex-start; gap: 0.5rem;
+  padding: 0.15rem 0; font-size: 0.78rem; color: var(--text-2); line-height: 1.5;
 }
-.resize-handle:hover, .resize-handle.dragging { background: var(--violet-light); }
-.resize-handle::after {
-  content: ''; position: absolute; top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  width: 3px; height: 24px; border-radius: 2px;
-  background: var(--border); transition: background 0.15s;
+.info-line .dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--violet); margin-top: 0.4rem; flex-shrink: 0;
 }
-.resize-handle:hover::after, .resize-handle.dragging::after { background: var(--violet); }
+.info-line .val { color: var(--text); font-weight: 600; }
 
-/* ── Output area ── */
-.output { flex: 1; display: flex; flex-direction: column; background: var(--white); min-width: 0; }
-.output-bar {
-  display: flex; align-items: center; gap: 0.4rem;
-  padding: 0.5rem 1.25rem;
-  border-bottom: 1px solid var(--border);
-  flex-wrap: wrap;
-}
-.tab { font-family: var(--sans); font-size: 0.72rem; font-weight: 600; padding: 0.2rem 0; margin-right: 0.75rem; background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-3); cursor: pointer; }
-.tab.active { color: var(--violet); border-bottom-color: var(--violet); }
-.tab:hover:not(.active) { color: var(--text-2); }
-.chips { display: flex; gap: 0.25rem; flex: 1; overflow-x: auto; }
-.chip {
-  font-family: var(--mono); font-size: 0.58rem;
-  padding: 0.15rem 0.4rem; border-radius: 4px;
-  background: var(--bg); color: var(--text-3); border: none;
-  cursor: pointer; white-space: nowrap;
-}
-.chip:hover { color: var(--text-2); }
-.chip.active { background: var(--violet-light); color: var(--violet-text); }
-.out-btns { display: flex; gap: 0.25rem; }
-.btn-s {
-  font-family: var(--sans); font-size: 0.68rem; font-weight: 600;
-  padding: 0.2rem 0.5rem; border-radius: 4px;
-  border: 1px solid var(--border); background: var(--white);
-  color: var(--text-2); cursor: pointer;
-}
-.btn-s:hover { border-color: var(--violet); color: var(--violet-text); }
-.btn-s.saved { border-color: var(--green); color: var(--green); }
-
-.output-body { flex: 1; overflow-y: auto; }
-.output-body::-webkit-scrollbar { width: 2px; }
-.output-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-#output-editor {
-  width: 100%; height: 100%; min-height: 400px;
-  background: transparent; color: var(--text); border: none;
-  font-family: var(--mono); font-size: 0.72rem; line-height: 1.65;
-  padding: 1.25rem; resize: none; outline: none;
-}
-#output-preview {
-  padding: 1.25rem; font-size: 0.85rem; line-height: 1.75;
-  max-width: 720px;
-}
-#output-preview h1 { font-size: 1.2rem; font-weight: 800; margin-bottom: 0.5rem; }
-#output-preview h2 { font-size: 1rem; font-weight: 700; color: var(--violet-text); margin-top: 1.2rem; margin-bottom: 0.35rem; }
-#output-preview h3 { font-size: 0.9rem; font-weight: 700; margin-top: 1rem; margin-bottom: 0.3rem; }
-#output-preview p { margin-bottom: 0.5rem; }
-#output-preview strong { color: var(--text); }
-#output-preview a { color: var(--violet); text-decoration: none; }
-#output-preview a:hover { text-decoration: underline; }
-#output-preview hr { border: none; border-top: 1px solid var(--border); margin: 1rem 0; }
-#output-preview table { width: 100%; border-collapse: collapse; margin: 0.5rem 0; font-size: 0.75rem; }
-#output-preview th { background: var(--bg); padding: 0.3rem 0.5rem; text-align: left; font-weight: 600; color: var(--text-2); border: 1px solid var(--border); }
-#output-preview td { padding: 0.3rem 0.5rem; border: 1px solid var(--border); }
-#output-preview ol, #output-preview ul { padding-left: 1.3rem; margin-bottom: 0.5rem; }
-#output-preview li { margin-bottom: 0.2rem; }
-#output-preview code { background: var(--bg); padding: 0.1rem 0.25rem; border-radius: 3px; font-family: var(--mono); font-size: 0.85em; }
-.output-empty { color: var(--text-3); text-align: center; padding: 3rem 1rem; font-size: 0.82rem; }
-
-/* ── Feedback ── */
-.feedback {
-  border-top: 1px solid var(--border);
-  background: var(--white);
-  padding: 0.5rem 1.25rem;
+/* ── Search stage ── */
+.query-row {
   display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.2rem 0; font-size: 0.72rem; font-family: var(--mono); color: var(--text-3);
 }
-.feedback-label { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-3); flex-shrink: 0; }
+.query-src {
+  font-size: 0.6rem; padding: 0.12rem 0.4rem; border-radius: 4px;
+  background: var(--violet-light); color: var(--violet-text);
+  white-space: nowrap; font-weight: 500;
+}
+.query-text { color: var(--text-2); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.query-more { font-size: 0.68rem; color: var(--text-3); padding: 0.25rem 0; }
+
+.verified-row {
+  display: flex; align-items: center; gap: 0.4rem;
+  padding: 0.2rem 0; font-size: 0.78rem;
+}
+.verified-cnt {
+  font-family: var(--mono); font-size: 0.62rem; font-weight: 500;
+  color: var(--violet-text); background: var(--violet-light);
+  padding: 0.08rem 0.4rem; border-radius: 4px; min-width: 20px; text-align: center;
+}
+.verified-name { color: var(--text); font-weight: 600; }
+
+/* ── Filter stage ── */
+.section-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+.section-title { font-size: 0.85rem; font-weight: 700; color: var(--text); }
+.section-sub { font-size: 0.68rem; color: var(--text-3); }
+
+.trend-card {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem; cursor: pointer; transition: all 0.15s;
+}
+.trend-card:hover { border-color: var(--text-3); }
+.trend-card.picked {
+  border-color: var(--violet); border-width: 2px;
+  background: linear-gradient(135deg, var(--white) 0%, var(--violet-light) 100%);
+}
+.tc-top { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem; }
+.tc-rank {
+  font-family: var(--mono); font-size: 0.65rem; font-weight: 500;
+  color: var(--text-3); min-width: 1.2rem;
+}
+.tc-name { font-size: 0.82rem; font-weight: 700; color: var(--text); flex: 1; }
+.tc-pick-badge {
+  font-size: 0.6rem; font-weight: 700; padding: 0.15rem 0.5rem;
+  border-radius: 5px; background: var(--yellow); color: var(--text);
+  letter-spacing: 0.02em;
+}
+.tc-core { font-size: 0.75rem; color: var(--text-2); line-height: 1.5; margin-bottom: 0.4rem; }
+.tc-tags { display: flex; gap: 0.25rem; flex-wrap: wrap; }
+.tc-tag {
+  font-size: 0.6rem; font-family: var(--mono);
+  padding: 0.1rem 0.4rem; border-radius: 4px;
+  background: var(--bg); color: var(--text-3);
+}
+.tc-extra {
+  display: none; margin-top: 0.5rem; padding-top: 0.5rem;
+  border-top: 1px solid var(--border); font-size: 0.72rem; color: var(--text-2); line-height: 1.5;
+}
+.trend-card.expanded .tc-extra { display: block; }
+.tc-extra-label { font-weight: 600; color: var(--text); font-size: 0.68rem; margin-bottom: 0.15rem; }
+
+.pick-reason {
+  background: linear-gradient(135deg, var(--violet-light) 0%, var(--yellow-soft) 100%);
+  border: 1px solid var(--violet);
+  border-radius: var(--radius); padding: 0.85rem 1rem; margin-top: 0.75rem;
+}
+.pick-reason-head { font-size: 0.78rem; font-weight: 700; color: var(--violet-text); margin-bottom: 0.3rem; }
+.pick-reason-text { font-size: 0.75rem; color: var(--text-2); line-height: 1.55; }
+
+/* ── Enrich stage ── */
+.enrich-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.enrich-card {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 0.75rem 0.85rem;
+}
+.enrich-label { font-size: 0.62rem; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.25rem; }
+.enrich-val { font-size: 0.78rem; color: var(--text); line-height: 1.5; }
+.enrich-full { grid-column: 1 / -1; }
+
+/* ── Write + Review stage ── */
+.brief-bar {
+  display: flex; gap: 0.4rem; margin-bottom: 1rem;
+  overflow-x: auto; padding-bottom: 0.25rem;
+}
+.brief-chip {
+  font-size: 0.68rem; padding: 0.35rem 0.7rem;
+  border-radius: var(--radius); border: 1px solid var(--border);
+  background: var(--white); color: var(--text-2);
+  white-space: nowrap; flex-shrink: 0;
+}
+.brief-chip .bv { font-weight: 600; color: var(--text); }
+
+.post-card {
+  background: var(--white); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden; margin-bottom: 0.65rem;
+}
+.pc-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.6rem 1rem; border-bottom: 1px solid var(--border);
+}
+.pc-platform { display: flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; font-weight: 700; color: var(--text); }
+.pc-platform .plat-icon {
+  width: 20px; height: 20px; border-radius: 5px; display: flex;
+  align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 800; color: #fff;
+}
+.plat-twitter { background: #1DA1F2; }
+.plat-linkedin { background: #0A66C2; }
+.plat-instagram { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
+.pc-scores { display: flex; align-items: center; gap: 0.5rem; }
+.pc-score-num {
+  font-size: 1.1rem; font-weight: 800; font-family: var(--mono);
+}
+.pc-score-num.pass { color: var(--green); }
+.pc-score-num.fail { color: var(--red); }
+.pc-pass-badge {
+  font-size: 0.58rem; font-weight: 700; padding: 0.12rem 0.4rem;
+  border-radius: 4px; text-transform: uppercase; letter-spacing: 0.03em;
+}
+.pc-pass-badge.pass { background: var(--green-bg); color: var(--green); }
+.pc-pass-badge.fail { background: var(--red-bg); color: var(--red); }
+.pc-body {
+  padding: 1rem; font-size: 0.8rem; color: var(--text-2);
+  line-height: 1.65; max-height: 120px; overflow: hidden; position: relative;
+  white-space: pre-wrap;
+}
+.pc-body::after {
+  content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+  height: 40px; background: linear-gradient(transparent, var(--white));
+}
+.pc-body.expanded { max-height: none; }
+.pc-body.expanded::after { display: none; }
+.pc-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.5rem 1rem; border-top: 1px solid var(--border);
+}
+.pc-actions { display: flex; gap: 0.3rem; }
+.pc-btn {
+  font-size: 0.68rem; font-weight: 600; padding: 0.3rem 0.6rem;
+  border-radius: 6px; border: 1px solid var(--border);
+  background: var(--white); color: var(--text-2); cursor: pointer;
+  font-family: var(--sans); transition: all 0.15s;
+}
+.pc-btn:hover { border-color: var(--violet); color: var(--violet-text); }
+.pc-btn.accent { border-color: var(--violet); color: var(--violet); background: var(--violet-light); }
+.pc-detail-scores {
+  display: flex; gap: 0.3rem; font-size: 0.6rem;
+  font-family: var(--mono); color: var(--text-3);
+}
+.pc-detail-scores span {
+  padding: 0.1rem 0.35rem; border-radius: 4px; background: var(--bg);
+}
+
+/* ── Bottom bar ── */
+.bottom-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.75rem 0; margin-top: 0.5rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.72rem; color: var(--text-3);
+}
+.bottom-bar .timer { font-family: var(--mono); }
+.next-btn {
+  padding: 0.5rem 1.2rem; border-radius: var(--radius); border: none;
+  background: var(--violet); color: #fff;
+  font-size: 0.78rem; font-weight: 700; cursor: pointer;
+  font-family: var(--sans); transition: opacity 0.15s;
+}
+.next-btn:hover { opacity: 0.88; }
+.next-btn.secondary {
+  background: var(--white); color: var(--violet-text);
+  border: 1px solid var(--violet);
+}
+
+/* ── Done stage ── */
+.done-hero { text-align: center; padding: 1.5rem 0; }
+.done-hero h2 { font-size: 1.2rem; font-weight: 800; color: var(--text); margin-bottom: 0.3rem; }
+.done-hero p { font-size: 0.82rem; color: var(--text-2); }
+.done-actions { display: flex; gap: 0.5rem; justify-content: center; margin: 1rem 0; }
+
+.output-preview {
+  font-size: 0.82rem; line-height: 1.75; max-width: 640px; margin: 0 auto;
+}
+.output-preview h1 { font-size: 1.15rem; font-weight: 800; margin-bottom: 0.4rem; }
+.output-preview h2 { font-size: 0.95rem; font-weight: 700; color: var(--violet-text); margin-top: 1rem; margin-bottom: 0.3rem; }
+.output-preview p { margin-bottom: 0.4rem; }
+.output-preview strong { color: var(--text); }
+.output-preview a { color: var(--violet); text-decoration: none; }
+.output-preview a:hover { text-decoration: underline; }
+.output-preview hr { border: none; border-top: 1px solid var(--border); margin: 0.75rem 0; }
+.output-preview table { width: 100%; border-collapse: collapse; margin: 0.5rem 0; font-size: 0.72rem; }
+.output-preview th { background: var(--bg); padding: 0.3rem 0.5rem; text-align: left; font-weight: 600; color: var(--text-2); border: 1px solid var(--border); }
+.output-preview td { padding: 0.3rem 0.5rem; border: 1px solid var(--border); }
+
+/* ── Feedback bar ── */
+.feedback-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--white); border-top: 1px solid var(--border);
+  padding: 0.5rem 1.5rem; display: none; align-items: center; gap: 0.5rem;
+  z-index: 10;
+}
+.feedback-bar.visible { display: flex; }
+.feedback-label { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-3); flex-shrink: 0; }
 .feedback-input {
   flex: 1; font-family: var(--sans); font-size: 0.78rem;
-  padding: 0.3rem 0.5rem; border-radius: 6px;
+  padding: 0.3rem 0.6rem; border-radius: var(--radius);
   border: 1px solid var(--border); background: var(--bg);
-  color: var(--text); outline: none; resize: none; min-height: 28px;
+  color: var(--text); outline: none;
 }
 .feedback-input::placeholder { color: var(--text-3); }
 .feedback-input:focus { border-color: var(--violet); }
 .btn-send {
   font-family: var(--sans); font-size: 0.72rem; font-weight: 600;
-  padding: 0.25rem 0.6rem; border-radius: 6px; border: 1px solid var(--border);
+  padding: 0.3rem 0.7rem; border-radius: 6px; border: 1px solid var(--border);
   background: var(--white); color: var(--text-2); cursor: pointer;
 }
 .btn-send:hover { border-color: var(--violet); color: var(--violet-text); }
-.btn-send.sent { border-color: var(--green); color: var(--green); }
 
-@media (max-width: 720px) {
-  .log, .resize-handle { display: none; }
-  .topbar { flex-wrap: wrap; height: auto; padding: 0.5rem 1rem; }
-  .controls { width: 100%; }
+/* ── Misc ── */
+.hidden { display: none !important; }
+.fade-in { animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 600px) {
+  .stage-container { padding: 1rem; }
+  .field-row { flex-direction: column; }
+  .enrich-grid { grid-template-columns: 1fr; }
+  .topbar { padding: 0 1rem; }
+  .steps { padding: 0 1rem; overflow-x: auto; }
 }
 </style>
 </head>
@@ -239,7 +463,7 @@ select.ctrl-field { cursor: pointer; }
 
 <div class="topbar">
   <div class="logo">
-    <svg viewBox="0 0 100 100" width="22" height="22">
+    <svg viewBox="0 0 100 100" width="24" height="24">
       <rect width="100" height="100" rx="26" fill="#5B3DF5"/>
       <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="9">
         <path stroke="#FFF" d="M24 46L80 46"/><path stroke="#FFF" d="M20 66L76 66"/>
@@ -249,89 +473,198 @@ select.ctrl-field { cursor: pointer; }
     </svg>
     <div class="logo-text">Trend<span>Hacker</span></div>
   </div>
-  <div class="controls">
-    <select class="ctrl-field" id="brand-select"><option value="">Brand...</option></select>
-    <input class="ctrl-field w-niche" type="text" id="niche-input" placeholder="Niche">
-    <input class="ctrl-field w-url" type="text" id="url-input" placeholder="Brand URL">
-    <button class="btn-run" id="btn-run" onclick="runAgent()">
-      <span class="play">Run</span>
-      <span class="spin"></span>
-    </button>
-    <button class="btn-stop" id="btn-stop" onclick="stopAgent()">Stop</button>
-  </div>
+  <div class="topbar-meta" id="topbar-meta"></div>
 </div>
 
-<div class="steps" id="steps">
-  <div class="s" data-step="searching"><span class="dot"></span> Search</div>
-  <span class="arr">/</span>
-  <div class="s" data-step="filtering"><span class="dot"></span> Filter</div>
-  <span class="arr">/</span>
-  <div class="s" data-step="enriching"><span class="dot"></span> Enrich</div>
-  <span class="arr">/</span>
-  <div class="s" data-step="writing"><span class="dot"></span> Write</div>
-  <span class="arr">/</span>
-  <div class="s" data-step="reviewing"><span class="dot"></span> Review</div>
-  <span class="arr">/</span>
-  <div class="s" data-step="saving"><span class="dot"></span> Done</div>
+<div class="steps" id="steps-bar">
+  <button class="step-tab active" data-stage="input" onclick="showStage('input')">Start</button>
+  <span class="step-sep">/</span>
+  <button class="step-tab" data-stage="searching" onclick="showStage('searching')"><span class="spinner"></span>Search</button>
+  <span class="step-sep">/</span>
+  <button class="step-tab" data-stage="filtering" onclick="showStage('filtering')"><span class="spinner"></span>Filter</button>
+  <span class="step-sep">/</span>
+  <button class="step-tab" data-stage="enriching" onclick="showStage('enriching')"><span class="spinner"></span>Enrich</button>
+  <span class="step-sep">/</span>
+  <button class="step-tab" data-stage="writing" onclick="showStage('writing')"><span class="spinner"></span>Write</button>
+  <span class="step-sep">/</span>
+  <button class="step-tab" data-stage="reviewing" onclick="showStage('reviewing')"><span class="spinner"></span>Review</button>
+  <span class="step-sep">/</span>
+  <button class="step-tab" data-stage="done" onclick="showStage('done')">Done</button>
 </div>
 
-<div class="main">
+<div class="stage-container">
 
-  <div class="log" id="log-panel">
-    <div class="log-head">
-      <span class="log-title">Log</span>
-      <span class="log-meta" id="api-badge">0 calls</span>
+  <!-- ── INPUT ── -->
+  <div class="stage visible" id="stage-input">
+    <div class="input-hero">
+      <h1>What's your brand <span class="accent">riding</span> next?</h1>
+      <p>Give us a name, a URL, or just describe your brand. Pick a niche and let the agent find the trend worth posting about.</p>
     </div>
-    <div class="log-welcome" id="welcome">Pick a brand and run the agent.</div>
-    <div class="log-body" id="console"></div>
+    <div class="input-fields">
+      <div class="field-row">
+        <input class="field" type="text" id="brand-input" list="brand-list" placeholder="Brand name (optional)" autocomplete="off">
+        <datalist id="brand-list"></datalist>
+        <input class="field" type="text" id="url-input" placeholder="https://yourbrand.com">
+      </div>
+      <textarea class="field" id="context-input" rows="3" placeholder="Tell us about the brand — tone, audience, what to avoid... (optional)"></textarea>
+      <input class="field" type="text" id="niche-input" placeholder="Or type a custom niche...">
+    </div>
+    <div class="divider-line"><hr><span>pick a lane</span><hr></div>
+    <div class="niche-grid" id="niche-grid">
+      <span class="niche-pill" data-niche="AI and Tech">AI & Tech</span>
+      <span class="niche-pill" data-niche="Music">Music</span>
+      <span class="niche-pill" data-niche="Fitness">Fitness</span>
+      <span class="niche-pill" data-niche="Gaming">Gaming</span>
+      <span class="niche-pill" data-niche="Beauty and Skincare">Beauty</span>
+      <span class="niche-pill" data-niche="Finance and Investing">Finance</span>
+      <span class="niche-pill" data-niche="Food and Dining">Food</span>
+      <span class="niche-pill" data-niche="Fashion">Fashion</span>
+      <span class="niche-pill" data-niche="Travel and Outdoors">Travel</span>
+      <span class="niche-pill" data-niche="Health and Wellness">Health</span>
+      <span class="niche-pill" data-niche="Entertainment and Pop Culture">Entertainment</span>
+      <span class="niche-pill" data-niche="Crypto and Web3">Crypto</span>
+    </div>
+    <button class="go-btn" id="go-btn" onclick="runAgent()">
+      <span class="spin"></span>
+      <span class="play-text">Hack the trends →</span>
+    </button>
+    <div class="input-footnote">~2 min · Claude Haiku + Serper · ~$0.02 per run</div>
+    <div class="prev-runs" id="prev-runs">
+      <div class="prev-runs-title">Previous runs</div>
+      <div class="prev-chips" id="prev-chips"></div>
+    </div>
   </div>
 
-  <div class="resize-handle" id="resize-handle"></div>
-
-  <div class="output">
-    <div class="output-bar">
-      <button class="tab active" onclick="setMode('preview')">Preview</button>
-      <button class="tab" onclick="setMode('edit')">Edit</button>
-      <div class="chips" id="files"></div>
-      <div class="out-btns" id="out-btns" style="display:none">
-        <button class="btn-s" id="btn-save" onclick="saveOutput()">Save</button>
-        <button class="btn-s" onclick="downloadOutput()">Download</button>
+  <!-- ── SEARCH ── -->
+  <div class="stage" id="stage-searching">
+    <div class="card fade-in" id="search-strategy">
+      <div class="card-head">
+        <span class="card-title"><span class="icon">🎯</span> Strategy</span>
+        <span class="badge badge-violet" id="search-plan-badge">planning...</span>
+      </div>
+      <div id="search-strategy-body">
+        <div class="info-line"><span class="dot"></span><span>Analyzing brand guidelines...</span></div>
       </div>
     </div>
-    <div class="output-body">
-      <div class="output-empty" id="empty">Run the agent or select a previous output</div>
-      <div id="output-preview" style="display:none"></div>
-      <textarea id="output-editor" style="display:none" spellcheck="false"></textarea>
+    <div class="card fade-in" id="search-queries" style="display:none">
+      <div class="card-head">
+        <span class="card-title"><span class="icon">🔍</span> Queries</span>
+      </div>
+      <div id="search-queries-body"></div>
     </div>
-    <div class="feedback">
-      <span class="feedback-label">Feedback</span>
-      <input class="feedback-input" type="text" id="feedback-input" placeholder="Tell the agent what to improve next time...">
-      <button class="btn-send" id="btn-send" onclick="sendFeedback()">Send</button>
+    <div class="card fade-in" id="search-results-card" style="display:none">
+      <div class="card-head">
+        <span class="card-title"><span class="icon">📡</span> Results</span>
+        <span class="badge badge-green" id="results-count-badge"></span>
+      </div>
+      <div id="search-results-body"></div>
     </div>
   </div>
 
+  <!-- ── FILTER ── -->
+  <div class="stage" id="stage-filtering">
+    <div class="section-head">
+      <span class="section-title" id="filter-title">Clustering trends...</span>
+      <span class="section-sub">click to expand</span>
+    </div>
+    <div id="filter-trends-list"></div>
+    <div id="filter-pick-reason" style="display:none"></div>
+  </div>
+
+  <!-- ── ENRICH ── -->
+  <div class="stage" id="stage-enriching">
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title"><span class="icon">🔬</span> Deep research</span>
+        <span class="badge badge-violet">enriching...</span>
+      </div>
+      <div class="info-line"><span class="dot"></span><span>Running 4 Serper searches for context, social conversation, triggering events, and key voices...</span></div>
+    </div>
+    <div id="enrich-data" style="display:none"></div>
+  </div>
+
+  <!-- ── WRITE ── -->
+  <div class="stage" id="stage-writing">
+    <div class="brief-bar" id="write-brief-bar"></div>
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title"><span class="icon">✍️</span> Drafting posts</span>
+        <span class="badge badge-violet">writing...</span>
+      </div>
+      <div class="info-line"><span class="dot"></span><span>Generating posts for Twitter/X, LinkedIn, and Instagram...</span></div>
+    </div>
+  </div>
+
+  <!-- ── REVIEW ── -->
+  <div class="stage" id="stage-reviewing">
+    <div class="brief-bar" id="review-brief-bar"></div>
+    <div id="review-posts-list"></div>
+  </div>
+
+  <!-- ── DONE ── -->
+  <div class="stage" id="stage-done">
+    <div class="done-hero">
+      <h2>All done 🎉</h2>
+      <p id="done-summary"></p>
+    </div>
+    <div class="done-actions">
+      <button class="next-btn" onclick="downloadOutput()">Download .md</button>
+      <button class="next-btn secondary" onclick="showStage('input')">Run again</button>
+    </div>
+    <div class="output-preview" id="done-preview"></div>
+  </div>
+
+</div>
+
+<div class="feedback-bar" id="feedback-bar">
+  <span class="feedback-label">Feedback</span>
+  <input class="feedback-input" type="text" id="feedback-input" placeholder="Tell the agent what to improve next time...">
+  <button class="btn-send" id="btn-send" onclick="sendFeedback()">Send</button>
 </div>
 
 <script>
-let currentOutput = '', currentFilename = '', outputMode = 'preview', apiCalls = 0, evtSource = null;
+let evtSource = null, currentOutput = '', currentFilename = '';
+let activeStage = 'input';
+let completedStages = new Set();
+let agentData = { trends: [], selected: null, enrichment: null, posts: '', review: null };
+let apiCalls = 0;
 
-document.addEventListener('DOMContentLoaded', () => { loadBrands(); loadFiles(); initResize(); });
+document.addEventListener('DOMContentLoaded', () => {
+  loadBrands();
+  loadFiles();
+  document.querySelectorAll('.niche-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('.niche-pill').forEach(p => p.classList.remove('selected'));
+      pill.classList.add('selected');
+      document.getElementById('niche-input').value = pill.dataset.niche;
+    });
+  });
+  const nicheInput = document.getElementById('niche-input');
+  nicheInput.addEventListener('input', () => {
+    document.querySelectorAll('.niche-pill').forEach(p => p.classList.remove('selected'));
+  });
+});
 
 async function loadBrands() {
   try {
-    const b = await (await fetch('/api/brands')).json();
-    const s = document.getElementById('brand-select');
-    b.forEach(n => { const o = document.createElement('option'); o.value = n; o.textContent = n; s.appendChild(o); });
+    const brands = await (await fetch('/api/brands')).json();
+    const dl = document.getElementById('brand-list');
+    brands.forEach(b => { const o = document.createElement('option'); o.value = b; dl.appendChild(o); });
   } catch(e) {}
 }
 
 async function loadFiles() {
   try {
-    const f = await (await fetch('/api/outputs')).json();
-    const c = document.getElementById('files'); c.innerHTML = '';
-    f.forEach(n => {
-      const b = document.createElement('button'); b.className = 'chip'; b.textContent = n;
-      b.onclick = () => loadFile(n); c.appendChild(b);
+    const files = await (await fetch('/api/outputs')).json();
+    const c = document.getElementById('prev-chips');
+    c.innerHTML = '';
+    if (!files.length) { document.getElementById('prev-runs').style.display = 'none'; return; }
+    files.slice(0, 8).forEach(f => {
+      const btn = document.createElement('button');
+      btn.className = 'prev-chip';
+      btn.textContent = f;
+      btn.onclick = () => loadFile(f);
+      c.appendChild(btn);
     });
   } catch(e) {}
 }
@@ -340,138 +673,274 @@ async function loadFile(name) {
   try {
     const d = await (await fetch(`/api/output/${name}`)).json();
     currentOutput = d.content; currentFilename = name;
-    show(currentOutput);
-    document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.textContent === name));
-    document.getElementById('out-btns').style.display = '';
+    completedStages = new Set(['input','searching','filtering','enriching','writing','reviewing','done']);
+    updateStepBar('done');
+    showStage('done');
+    document.getElementById('done-summary').textContent = name;
+    document.getElementById('done-preview').innerHTML = marked.parse(currentOutput);
+    document.getElementById('feedback-bar').classList.add('visible');
   } catch(e) {}
 }
 
+function showStage(stage) {
+  if (stage !== 'input' && stage !== activeStage && !completedStages.has(stage)) return;
+  document.querySelectorAll('.stage').forEach(s => s.classList.remove('visible'));
+  const el = document.getElementById('stage-' + stage);
+  if (el) el.classList.add('visible');
+  document.querySelectorAll('.step-tab').forEach(t => {
+    t.classList.remove('active');
+    if (t.dataset.stage === stage) t.classList.add('active');
+  });
+  activeStage = stage;
+}
+
+function updateStepBar(currentStep) {
+  const order = ['input','searching','filtering','enriching','writing','reviewing','done'];
+  const idx = order.indexOf(currentStep);
+  document.querySelectorAll('.step-tab').forEach(tab => {
+    const tabIdx = order.indexOf(tab.dataset.stage);
+    tab.classList.remove('active','done');
+    if (tabIdx < idx) { tab.classList.add('done'); completedStages.add(tab.dataset.stage); }
+    else if (tabIdx === idx) tab.classList.add('active');
+  });
+}
+
 function runAgent() {
-  const brand = document.getElementById('brand-select').value;
+  const brand = document.getElementById('brand-input').value.trim();
   const niche = document.getElementById('niche-input').value;
-  const url = document.getElementById('url-input').value;
-
-  document.getElementById('brand-select').classList.remove('invalid');
+  const url = document.getElementById('url-input').value.trim();
+  const context = document.getElementById('context-input').value.trim();
+  document.getElementById('brand-input').classList.remove('invalid');
   document.getElementById('url-input').classList.remove('invalid');
-
-  if (!brand && !url.trim()) {
-    document.getElementById('brand-select').classList.add('invalid');
+  document.getElementById('context-input').classList.remove('invalid');
+  if (!brand && !url && !context) {
+    document.getElementById('brand-input').classList.add('invalid');
     document.getElementById('url-input').classList.add('invalid');
-    log('Provide a brand name or brand URL to start.', 'error');
-    document.getElementById('welcome').style.display = 'none';
+    document.getElementById('context-input').classList.add('invalid');
     return;
   }
-
-  const btn = document.getElementById('btn-run');
+  const btn = document.getElementById('go-btn');
   btn.classList.add('running'); btn.disabled = true;
-  document.getElementById('btn-stop').classList.add('visible');
-  apiCalls = 0; badge();
-  document.getElementById('welcome').style.display = 'none';
-  document.getElementById('console').innerHTML = '';
-  resetSteps();
+  apiCalls = 0;
+  completedStages = new Set();
+  agentData = { trends: [], selected: null, enrichment: null, posts: '', review: null };
+  // Reset stage content
+  document.getElementById('search-strategy-body').innerHTML = '<div class="info-line"><span class="dot"></span><span>Analyzing brand guidelines...</span></div>';
+  document.getElementById('search-queries').style.display = 'none';
+  document.getElementById('search-results-card').style.display = 'none';
+  document.getElementById('filter-trends-list').innerHTML = '';
+  document.getElementById('filter-pick-reason').style.display = 'none';
+  document.getElementById('enrich-data').style.display = 'none';
+  document.getElementById('review-posts-list').innerHTML = '';
 
-  const p = new URLSearchParams({brand, niche, brand_url: url});
+  const meta = document.getElementById('topbar-meta');
+  meta.innerHTML = `<span class="dot"></span> ${brand || url || 'Custom brand'} · ${niche || 'General'}`;
+
+  const p = new URLSearchParams({ brand, niche, brand_url: url, brand_context: context });
   evtSource = new EventSource(`/api/run?${p}`);
 
-  evtSource.addEventListener('step', e => { const d = JSON.parse(e.data); setStep(d.step); log(d.message, 'info'); });
-  evtSource.addEventListener('log', e => { const d = JSON.parse(e.data); log(d.message, d.type || 'info'); });
+  evtSource.addEventListener('step', e => {
+    const d = JSON.parse(e.data);
+    updateStepBar(d.step);
+    showStage(d.step);
+  });
+
+  evtSource.addEventListener('log', e => {
+    const d = JSON.parse(e.data);
+    // Update strategy card with key log messages
+    if (d.message && d.message.startsWith('Loaded brand')) {
+      document.getElementById('search-plan-badge').textContent = 'ready';
+      document.getElementById('search-plan-badge').className = 'badge badge-green';
+    }
+  });
+
   evtSource.addEventListener('trends', e => {
-    const t = JSON.parse(e.data); apiCalls += 3; badge();
-    t.slice(0, 5).forEach((x, i) => log(`${i+1}. ${x.title}`, 'info'));
-    if (t.length > 5) log(`+${t.length - 5} more`, 'info');
+    const trends = JSON.parse(e.data);
+    agentData.trends = trends;
+    apiCalls += 3;
+    // Populate search results card
+    document.getElementById('search-results-card').style.display = '';
+    document.getElementById('results-count-badge').textContent = `${trends.length} found`;
+    let html = '';
+    trends.slice(0, 6).forEach((t, i) => {
+      html += `<div class="info-line"><span class="dot" style="background:${i===0?'var(--yellow)':'var(--violet)'}"></span><span><span class="val">${esc(t.title)}</span> <span style="color:var(--text-3);font-size:0.68rem">— ${esc(t.source)}</span></span></div>`;
+    });
+    if (trends.length > 6) html += `<div style="font-size:0.68rem;color:var(--text-3);padding:0.2rem 0 0 1.2rem">+${trends.length - 6} more</div>`;
+    document.getElementById('search-results-body').innerHTML = html;
   });
-  evtSource.addEventListener('selected', () => { apiCalls++; badge(); });
+
+  evtSource.addEventListener('selected', e => {
+    const d = JSON.parse(e.data);
+    agentData.selected = d;
+    apiCalls++;
+    // Build filter view
+    const title = document.getElementById('filter-title');
+    const topTrends = d.top_trends || [];
+    if (topTrends.length) {
+      title.textContent = `${topTrends.length} trends found`;
+      let html = '';
+      topTrends.forEach((t, i) => {
+        const isPicked = t.name === d.trend_title;
+        html += `<div class="trend-card${isPicked?' picked':''}" onclick="this.classList.toggle('expanded')">
+          <div class="tc-top">
+            <span class="tc-rank">${String(i+1).padStart(2,'0')}</span>
+            <span class="tc-name">${esc(t.name)}</span>
+            ${isPicked?'<span class="tc-pick-badge">★ brand pick</span>':''}
+          </div>
+          <div class="tc-core">${esc(t.context||'')}</div>
+          <div class="tc-tags">${(t.hashtags||[]).slice(0,4).map(h=>`<span class="tc-tag">${esc(h)}</span>`).join('')}</div>
+        </div>`;
+      });
+      document.getElementById('filter-trends-list').innerHTML = html;
+    } else {
+      title.textContent = 'Trend selected';
+      document.getElementById('filter-trends-list').innerHTML = `<div class="card"><div class="card-head"><span class="card-title">${esc(d.trend_title)}</span></div><div class="info-line"><span class="dot"></span><span>${esc(d.trend_summary)}</span></div></div>`;
+    }
+    // Reasoning
+    if (d.reasoning) {
+      const reason = document.getElementById('filter-pick-reason');
+      reason.style.display = '';
+      reason.innerHTML = `<div class="pick-reason"><div class="pick-reason-head">💡 Why this trend?</div><div class="pick-reason-text">${esc(d.reasoning)}</div></div>`;
+    }
+  });
+
   evtSource.addEventListener('enrichment', e => {
-    const d = JSON.parse(e.data); apiCalls += 4; badge();
-    if (d.hashtags?.length) log(d.hashtags.slice(0, 5).join(' '), 'info');
+    const d = JSON.parse(e.data);
+    agentData.enrichment = d;
+    apiCalls += 4;
+    const el = document.getElementById('enrich-data');
+    el.style.display = '';
+    el.innerHTML = `<div class="enrich-grid fade-in">
+      <div class="enrich-card enrich-full"><div class="enrich-label">Core essence</div><div class="enrich-val">${esc(d.core_essence||'—')}</div></div>
+      <div class="enrich-card"><div class="enrich-label">Trajectory</div><div class="enrich-val">${esc(d.trajectory||'—')}</div></div>
+      <div class="enrich-card"><div class="enrich-label">Triggering events</div><div class="enrich-val">${esc(d.triggering_events||'—')}</div></div>
+      <div class="enrich-card enrich-full"><div class="enrich-label">Hashtags</div><div class="enrich-val">${(d.hashtags||[]).map(h=>`<span class="tc-tag" style="display:inline-block;margin:0.1rem 0.15rem">${esc(h)}</span>`).join('')}</div></div>
+      <div class="enrich-card enrich-full"><div class="enrich-label">Key phrases</div><div class="enrich-val">${(d.key_phrases||[]).join(', ')}</div></div>
+    </div>`;
+    // Build brief bar for write/review
+    const briefHTML = `
+      <div class="brief-chip">📈 <span class="bv">${esc(agentData.selected?.trend_title||'')}</span></div>
+      <div class="brief-chip">🧭 <span class="bv">${esc(d.trajectory||'—')}</span></div>
+      ${(d.hashtags||[]).length?`<div class="brief-chip"># <span class="bv">${(d.hashtags||[]).slice(0,3).join(' ')}</span></div>`:''}
+    `;
+    document.getElementById('write-brief-bar').innerHTML = briefHTML;
+    document.getElementById('review-brief-bar').innerHTML = briefHTML;
   });
-  evtSource.addEventListener('posts', () => { apiCalls++; badge(); });
-  evtSource.addEventListener('review', () => { apiCalls++; badge(); });
-  evtSource.addEventListener('rewrite', e => { const d = JSON.parse(e.data); apiCalls++; badge(); log(`Rewrote ${d.platform}`, 'warning'); });
+
+  evtSource.addEventListener('posts', e => {
+    const d = JSON.parse(e.data);
+    agentData.posts = d.markdown;
+    apiCalls++;
+  });
+
+  evtSource.addEventListener('review', e => {
+    const d = JSON.parse(e.data);
+    agentData.review = d.scores;
+    apiCalls++;
+    renderReviewPosts(agentData.posts, d.scores);
+  });
+
+  evtSource.addEventListener('rewrite', e => {
+    apiCalls++;
+  });
+
   evtSource.addEventListener('complete', e => {
-    const d = JSON.parse(e.data); currentOutput = d.output; currentFilename = d.filename;
-    show(d.output); log(`Done — ${d.filename}`, 'success');
-    document.getElementById('out-btns').style.display = ''; done(); loadFiles();
+    const d = JSON.parse(e.data);
+    currentOutput = d.output; currentFilename = d.filename;
+    completedStages.add('done');
+    updateStepBar('done');
+    showStage('done');
+    document.getElementById('done-summary').textContent = `${currentFilename} · ${apiCalls} API calls`;
+    document.getElementById('done-preview').innerHTML = marked.parse(d.output);
+    document.getElementById('feedback-bar').classList.add('visible');
+    done();
+    loadFiles();
   });
-  evtSource.addEventListener('error', e => { if (e.data) log(JSON.parse(e.data).message, 'error'); done(); });
+
+  evtSource.addEventListener('error', e => {
+    if (e.data) {
+      const d = JSON.parse(e.data);
+      alert(d.message);
+    }
+    done();
+  });
   evtSource.onerror = () => done();
 }
 
-function stopAgent() {
-  if (evtSource) {
-    evtSource.close(); evtSource = null;
-    log('Stopped by user.', 'warning');
-  }
-  done();
+function renderReviewPosts(markdown, scores) {
+  const platforms = ['twitter','linkedin','instagram'];
+  const labels = { twitter: 'Twitter / X', linkedin: 'LinkedIn', instagram: 'Instagram' };
+  const icons = { twitter: 'plat-twitter', linkedin: 'plat-linkedin', instagram: 'plat-instagram' };
+  const initials = { twitter: '𝕏', linkedin: 'in', instagram: 'ig' };
+  // Rough split by platform headers
+  let posts = {};
+  platforms.forEach(p => {
+    const patterns = {
+      twitter: /## Twitter.*?\n([\s\S]*?)(?=\n## |\n---|\Z)/i,
+      linkedin: /## LinkedIn.*?\n([\s\S]*?)(?=\n## |\n---|\Z)/i,
+      instagram: /## Instagram.*?\n([\s\S]*?)(?=\n## |\n---|\Z)/i,
+    };
+    const m = markdown.match(patterns[p]);
+    posts[p] = m ? m[1].trim() : '';
+  });
+
+  let html = '';
+  platforms.forEach(p => {
+    const r = scores[p] || {};
+    const overall = r.overall || '—';
+    const pass = r.pass !== false;
+    const ba = r.score_brand_alignment || '—';
+    const pf = r.score_platform_fit || '—';
+    const au = r.score_authenticity || '—';
+    const tc = r.score_trend_connection || '—';
+    html += `<div class="post-card fade-in">
+      <div class="pc-header">
+        <span class="pc-platform"><span class="plat-icon ${icons[p]}">${initials[p]}</span>${labels[p]}</span>
+        <div class="pc-scores">
+          <div class="pc-detail-scores"><span>brand ${ba}</span><span>fit ${pf}</span><span>auth ${au}</span><span>trend ${tc}</span></div>
+          <span class="pc-score-num ${pass?'pass':'fail'}">${overall}</span>
+          <span class="pc-pass-badge ${pass?'pass':'fail'}">${pass?'pass':'fail'}</span>
+        </div>
+      </div>
+      <div class="pc-body" onclick="this.classList.toggle('expanded')">${esc(posts[p])}</div>
+      <div class="pc-footer">
+        <div class="pc-actions">
+          <button class="pc-btn" onclick="copyText(this, '${p}')">Copy</button>
+          <button class="pc-btn" onclick="expandPost(this)">Expand</button>
+        </div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('review-posts-list').innerHTML = html;
+}
+
+function copyText(btn, platform) {
+  const card = btn.closest('.post-card');
+  const text = card.querySelector('.pc-body').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!'; btn.style.color = 'var(--green)'; btn.style.borderColor = 'var(--green)';
+    setTimeout(() => { btn.textContent = 'Copy'; btn.style.color = ''; btn.style.borderColor = ''; }, 1500);
+  });
+}
+
+function expandPost(btn) {
+  const body = btn.closest('.post-card').querySelector('.pc-body');
+  body.classList.toggle('expanded');
+  btn.textContent = body.classList.contains('expanded') ? 'Collapse' : 'Expand';
 }
 
 function done() {
   if (evtSource) { evtSource.close(); evtSource = null; }
-  const b = document.getElementById('btn-run');
-  b.classList.remove('running'); b.disabled = false;
-  document.getElementById('btn-stop').classList.remove('visible');
-}
-
-function resetSteps() { document.querySelectorAll('.s').forEach(s => s.classList.remove('active','done')); }
-
-function setStep(step) {
-  const ss = document.querySelectorAll('.s');
-  let found = false;
-  ss.forEach(el => {
-    if (el.dataset.step === step) { el.classList.remove('done'); el.classList.add('active'); found = true; }
-    else if (!found) { el.classList.remove('active'); el.classList.add('done'); }
-    else { el.classList.remove('active','done'); }
-  });
-  if (step === 'saving') ss.forEach(el => { el.classList.remove('active'); el.classList.add('done'); });
-}
-
-function log(msg, type) {
-  const el = document.getElementById('console');
-  const d = document.createElement('div'); d.className = `ll ${type||''}`; d.textContent = msg;
-  el.appendChild(d); el.scrollTop = el.scrollHeight;
-}
-
-function badge() { document.getElementById('api-badge').textContent = `${apiCalls} calls`; }
-
-function show(content) {
-  currentOutput = content;
-  document.getElementById('empty').style.display = 'none';
-  if (outputMode === 'preview') {
-    document.getElementById('output-preview').style.display = '';
-    document.getElementById('output-editor').style.display = 'none';
-    document.getElementById('output-preview').innerHTML = marked.parse(content);
-  } else {
-    document.getElementById('output-preview').style.display = 'none';
-    document.getElementById('output-editor').style.display = '';
-    document.getElementById('output-editor').value = content;
-  }
-}
-
-function setMode(mode) {
-  outputMode = mode;
-  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', (mode === 'preview' && i === 0) || (mode === 'edit' && i === 1)));
-  if (mode === 'edit') document.getElementById('output-editor').value = currentOutput;
-  if (mode === 'preview' && document.getElementById('output-editor').style.display !== 'none') currentOutput = document.getElementById('output-editor').value;
-  if (currentOutput) show(currentOutput);
-}
-
-async function saveOutput() {
-  if (!currentFilename) return;
-  if (outputMode === 'edit') currentOutput = document.getElementById('output-editor').value;
-  try {
-    await fetch(`/api/output/${currentFilename}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({content: currentOutput}) });
-    const b = document.getElementById('btn-save'); b.textContent = 'Saved'; b.classList.add('saved');
-    setTimeout(() => { b.textContent = 'Save'; b.classList.remove('saved'); }, 1500);
-  } catch(e) {}
+  const btn = document.getElementById('go-btn');
+  btn.classList.remove('running'); btn.disabled = false;
 }
 
 function downloadOutput() {
   if (!currentOutput) return;
-  if (outputMode === 'edit') currentOutput = document.getElementById('output-editor').value;
-  const b = new Blob([currentOutput], {type: 'text/markdown'});
-  const u = URL.createObjectURL(b);
-  const a = document.createElement('a'); a.href = u; a.download = currentFilename || 'output.md';
-  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(u);
+  const blob = new Blob([currentOutput], { type: 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = currentFilename || 'output.md';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
 }
 
 async function sendFeedback() {
@@ -479,38 +948,15 @@ async function sendFeedback() {
   const text = inp.value.trim();
   if (!text) return;
   try {
-    await fetch('/api/feedback', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({feedback: text, output_file: currentFilename}) });
-    const b = document.getElementById('btn-send'); b.textContent = 'Sent'; b.classList.add('sent');
+    await fetch('/api/feedback', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ feedback: text, output_file: currentFilename }) });
+    const btn = document.getElementById('btn-send');
+    btn.textContent = 'Sent!'; btn.style.color = 'var(--green)'; btn.style.borderColor = 'var(--green)';
     inp.value = '';
-    setTimeout(() => { b.textContent = 'Send'; b.classList.remove('sent'); }, 1500);
+    setTimeout(() => { btn.textContent = 'Send'; btn.style.color = ''; btn.style.borderColor = ''; }, 1500);
   } catch(e) {}
 }
 
-function initResize() {
-  const handle = document.getElementById('resize-handle');
-  const panel = document.getElementById('log-panel');
-  let startX, startW;
-
-  handle.addEventListener('mousedown', e => {
-    e.preventDefault();
-    startX = e.clientX;
-    startW = panel.offsetWidth;
-    handle.classList.add('dragging');
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
-  });
-
-  function onMove(e) {
-    const w = Math.max(160, Math.min(window.innerWidth * 0.5, startW + (e.clientX - startX)));
-    panel.style.width = w + 'px';
-  }
-
-  function onUp() {
-    handle.classList.remove('dragging');
-    document.removeEventListener('mousemove', onMove);
-    document.removeEventListener('mouseup', onUp);
-  }
-}
+function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
 </script>
 </body>
 </html>

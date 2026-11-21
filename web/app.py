@@ -117,30 +117,54 @@ def save_feedback():
 
 @app.route("/api/run")
 def run_agent():
-    brand = request.args.get("brand", "")
+    brand = request.args.get("brand", "").strip()
     niche = request.args.get("niche", "")
     brand_file = request.args.get("brand_file", "")
-    brand_url = request.args.get("brand_url", "")
+    brand_url = request.args.get("brand_url", "").strip()
+    brand_context = request.args.get("brand_context", "").strip()
 
     @stream_with_context
     def generate():
         try:
             yield _sse("step", {"step": "loading", "message": "Loading brand guidelines..."})
+
+            brand_guidelines = ""
+            loaded_from_file = False
+
             if brand:
-                brand_guidelines = _load_brand_guidelines(brand, brand_file or None)
-                yield _sse("log", {"message": f"Loaded brand: {brand}", "type": "success"})
-            elif brand_url:
-                brand_guidelines = (
-                    f"# Brand\n\n"
-                    f"**Website:** {brand_url}\n\n"
-                    f"Use the brand's website URL as context for tone and audience. "
-                    f"Keep posts professional, positive, and on-brand. "
-                    f"Avoid controversial or divisive topics.\n"
-                )
+                try:
+                    brand_guidelines = _load_brand_guidelines(brand, brand_file or None)
+                    loaded_from_file = True
+                    yield _sse("log", {"message": f"Loaded brand: {brand}", "type": "success"})
+                except FileNotFoundError:
+                    brand_guidelines += f"# {brand}\n\n"
+                    yield _sse("log", {"message": f"Brand name: {brand} (no guidelines file)", "type": "info"})
+
+            if brand_url and not loaded_from_file:
+                brand_guidelines += f"**Website:** {brand_url}\n\n"
                 yield _sse("log", {"message": f"Using URL: {brand_url}", "type": "success"})
-            else:
-                yield _sse("error", {"message": "Provide a brand name or brand URL."})
-                return
+            elif brand_url and loaded_from_file:
+                brand_guidelines += f"\n**Website:** {brand_url}\n\n"
+
+            if brand_context:
+                brand_guidelines += f"\n## Brand Context\n\n{brand_context}\n\n"
+                yield _sse("log", {"message": "Using provided brand context", "type": "success"})
+
+            if not brand_guidelines.strip():
+                brand_guidelines = (
+                    "# Brand\n\n"
+                    "No specific brand provided. "
+                    "Keep posts professional, positive, and engaging. "
+                    "Avoid controversial or divisive topics.\n"
+                )
+                yield _sse("log", {"message": "Running with generic brand defaults", "type": "info"})
+
+            if not loaded_from_file and not brand_context:
+                brand_guidelines += (
+                    "Use the brand's name and website as context for tone and audience. "
+                    "Keep posts professional, positive, and on-brand. "
+                    "Avoid controversial or divisive topics.\n"
+                )
 
             niche_val = niche if niche else None
             niche_label = niche or "General"
