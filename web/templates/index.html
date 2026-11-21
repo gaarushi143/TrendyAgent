@@ -806,10 +806,11 @@ function runAgent() {
     card.style.display = '';
     document.getElementById('results-count-badge').textContent = `${trends.length} found`;
     let html = '';
-    trends.slice(0, 6).forEach((t, i) => {
-      html += `<div class="info-line"><span class="dot" style="background:${i===0?'var(--yellow)':'var(--violet)'}"></span><span><span class="val">${esc(t.title)}</span> <span style="color:var(--text-3);font-size:0.68rem">— ${esc(t.source)}</span></span></div>`;
+    trends.forEach((t, i) => {
+      const hidden = i >= 6 ? ' style="display:none" data-extra-result' : '';
+      html += `<div class="info-line"${hidden}><span class="dot" style="background:${i===0?'var(--yellow)':'var(--violet)'}"></span><span><span class="val">${esc(t.title)}</span> <span style="color:var(--text-3);font-size:0.68rem">— ${esc(t.source)}</span></span></div>`;
     });
-    if (trends.length > 6) html += `<div style="font-size:0.68rem;color:var(--text-3);padding:0.2rem 0 0 1.2rem">+${trends.length - 6} more</div>`;
+    if (trends.length > 6) html += `<div class="expand-toggle" onclick="document.querySelectorAll('[data-extra-result]').forEach(e=>e.style.display='');this.style.display='none'" style="font-size:0.72rem;color:var(--violet);padding:0.3rem 0 0 1.2rem;cursor:pointer">+${trends.length - 6} more — show all</div>`;
     document.getElementById('search-results-body').innerHTML = html;
   });
 
