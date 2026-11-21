@@ -26,7 +26,7 @@ from dotenv import load_dotenv
 load_dotenv(dotenv_path=PROJECT_ROOT / ".env")
 
 from tools.enrich import enrich_trend
-from tools.search import search_trending
+from tools.search import search_trending, search_trending_agentic
 from tools.trend_filter import filter_trends_v2
 from tools.writer import (
     replace_post,
@@ -170,7 +170,30 @@ def run_agent():
             niche_label = niche or "General"
 
             yield _sse("step", {"step": "searching", "message": "Searching for trending topics..."})
-            results = search_trending(niche_val)
+
+            if niche_val:
+                results, search_metadata = search_trending_agentic(niche_val, brand_guidelines)
+                plan = search_metadata.get("search_plan", {})
+                evaluation = search_metadata.get("evaluation", {})
+                yield _sse("strategy", {
+                    "audience": plan.get("audience_summary", ""),
+                    "geography": plan.get("geography", {}).get("country_code", "us"),
+                    "query_count": len(plan.get("queries", [])),
+                })
+                yield _sse("queries", [
+                    {"query": q["query"], "source": q.get("source_hint", "general"), "endpoint": q.get("endpoint", "search")}
+                    for q in plan.get("queries", [])
+                ])
+                verified = evaluation.get("verified_trends", [])
+                if verified:
+                    yield _sse("verified", [
+                        {"name": v["trend_name"], "sources": v.get("source_count", 1)}
+                        for v in verified
+                    ])
+            else:
+                results = search_trending(niche_val)
+                search_metadata = {}
+
             if not results:
                 yield _sse("error", {"message": "No trending topics found. Try a different niche."})
                 return
@@ -179,7 +202,7 @@ def run_agent():
                 {"title": r["title"], "source": r["source"], "snippet": r["snippet"], "link": r["link"]}
                 for r in top_results
             ])
-            yield _sse("log", {"message": f"Found {len(results)} results, showing top 10", "type": "info"})
+            yield _sse("log", {"message": f"Found {len(results)} results", "type": "info"})
 
             yield _sse("step", {"step": "filtering", "message": "Claude is clustering and picking trends..."})
             trend = filter_trends_v2(results, niche_label, brand_guidelines)

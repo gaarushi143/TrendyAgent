@@ -742,24 +742,68 @@ function runAgent() {
   evtSource.addEventListener('step', e => {
     const d = JSON.parse(e.data);
     updateStepBar(d.step);
+    completedStages.add(d.step);
     showStage(d.step);
   });
 
   evtSource.addEventListener('log', e => {
     const d = JSON.parse(e.data);
-    // Update strategy card with key log messages
     if (d.message && d.message.startsWith('Loaded brand')) {
       document.getElementById('search-plan-badge').textContent = 'ready';
       document.getElementById('search-plan-badge').className = 'badge badge-green';
     }
   });
 
+  evtSource.addEventListener('strategy', e => {
+    const d = JSON.parse(e.data);
+    apiCalls++;
+    document.getElementById('search-plan-badge').textContent = `${d.query_count} queries`;
+    document.getElementById('search-plan-badge').className = 'badge badge-green';
+    let html = '';
+    if (d.audience) html += `<div class="info-line"><span class="dot" style="background:var(--violet)"></span><span><strong>Audience:</strong> ${esc(d.audience)}</span></div>`;
+    html += `<div class="info-line"><span class="dot" style="background:var(--yellow)"></span><span><strong>Region:</strong> ${esc((d.geography||'us').toUpperCase())}</span></div>`;
+    html += `<div class="info-line"><span class="dot" style="background:var(--green)"></span><span><strong>Planned queries:</strong> ${d.query_count}</span></div>`;
+    document.getElementById('search-strategy-body').innerHTML = html;
+  });
+
+  evtSource.addEventListener('queries', e => {
+    const queries = JSON.parse(e.data);
+    const card = document.getElementById('search-queries');
+    card.style.display = '';
+    const srcColors = { google_trends: 'var(--green)', news: 'var(--red)', search: 'var(--violet)', producthunt: 'var(--yellow)' };
+    let html = '';
+    queries.forEach(q => {
+      const color = srcColors[q.endpoint] || srcColors[q.source] || 'var(--text-3)';
+      const label = q.endpoint || q.source || 'web';
+      html += `<div class="info-line"><span class="dot" style="background:${color}"></span><span><span class="val">${esc(q.query)}</span> <span class="badge" style="font-size:0.6rem;padding:1px 6px;background:${color};color:#fff">${esc(label)}</span></span></div>`;
+    });
+    document.getElementById('search-queries-body').innerHTML = html;
+  });
+
+  evtSource.addEventListener('verified', e => {
+    const verified = JSON.parse(e.data);
+    const card = document.getElementById('search-results-card');
+    card.style.display = '';
+    document.getElementById('results-count-badge').textContent = `${verified.length} verified`;
+    let html = '';
+    verified.forEach((v, i) => {
+      html += `<div class="info-line"><span class="dot" style="background:${i===0?'var(--yellow)':'var(--green)'}"></span><span><span class="val">${esc(v.name)}</span> <span style="color:var(--text-3);font-size:0.68rem">— ${v.sources} source${v.sources!==1?'s':''}</span></span></div>`;
+    });
+    document.getElementById('search-results-body').innerHTML = html;
+  });
+
   evtSource.addEventListener('trends', e => {
     const trends = JSON.parse(e.data);
     agentData.trends = trends;
     apiCalls += 3;
-    // Populate search results card
-    document.getElementById('search-results-card').style.display = '';
+    const card = document.getElementById('search-results-card');
+    // If verified trends already populated the card, append raw count
+    if (card.style.display === '' && document.getElementById('search-results-body').children.length > 0) {
+      const badge = document.getElementById('results-count-badge');
+      badge.textContent += ` · ${trends.length} raw`;
+      return;
+    }
+    card.style.display = '';
     document.getElementById('results-count-badge').textContent = `${trends.length} found`;
     let html = '';
     trends.slice(0, 6).forEach((t, i) => {
