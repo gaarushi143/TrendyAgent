@@ -33,7 +33,8 @@ from dotenv import load_dotenv
 
 from tools.enrich import enrich_trend
 from tools.search import search_trending, search_trending_agentic
-from tools.writer import filter_trends, write_posts, review_posts, rewrite_post, split_posts, replace_post
+from tools.trend_filter import filter_trends_v2
+from tools.writer import write_posts, review_posts, rewrite_post, split_posts, replace_post
 
 # Load environment variables from .env file (API keys live here)
 load_dotenv()
@@ -142,11 +143,23 @@ def main():
         print(f"      Source: {r['source']}")
         print()
 
-    # --- Step 5: Filter trends with Claude ---
+    # --- Step 5: Filter trends with Claude (two-step: cluster → pick) ---
     niche_label = niche or "General"
-    print(f"\n🧠 Filtering for the best brand-safe trend...")
-    trend = filter_trends(results, niche_label, brand_guidelines)
-    print(f'   Selected: {trend["trend_title"]}')
+    print(f"\n🧠 Clustering search results into distinct trends...")
+    trend = filter_trends_v2(results, niche_label, brand_guidelines)
+
+    top_trends = trend.get("top_trends", [])
+    if top_trends:
+        print(f"   Found {len(top_trends)} distinct trends:\n")
+        for i, t in enumerate(top_trends, 1):
+            print(f"   {i}. {t['name']}")
+            print(f"      {t.get('why_trending', t.get('context', ''))[:80]}")
+            if t.get("hashtags"):
+                print(f"      {' '.join(t['hashtags'][:3])}")
+            print()
+
+    print(f'   🎯 Brand pick: {trend["trend_title"]}')
+    print(f'   Reason: {trend["reasoning"]}')
 
     # --- Step 6: Enrich the chosen trend ---
     print(f"\n🔬 Researching trend in depth...")
@@ -236,19 +249,24 @@ def main():
     output += "---\n\n"
     output += posts_markdown
 
+    if trend.get("conversation_hook"):
+        output += f'**Conversation Hook:** {trend["conversation_hook"]}\n\n'
+
     output += "\n\n---\n\n"
     output += "## Top Trending Topics\n\n"
     top_trends = trend.get("top_trends", [])
     if top_trends:
         for i, t in enumerate(top_trends, 1):
-            marker = " — *Selected*" if i == 1 else ""
+            is_selected = t.get("name", "") == trend.get("trend_title", "")
+            marker = " — *Selected*" if is_selected else ""
             output += f"**{i}. {t['name']}**{marker}\n\n"
-            output += f"{t.get('context', '')}\n\n"
-            if i == 1:
-                if trend.get("hashtags"):
-                    output += f"Hashtags: {' '.join(trend['hashtags'])}\n\n"
-                if trend.get("trajectory"):
-                    output += f"Trajectory: {trend['trajectory']}\n\n"
+            output += f"{t.get('core', t.get('context', ''))}\n\n"
+            if t.get("why_trending"):
+                output += f"*Why trending:* {t['why_trending']}\n\n"
+            if t.get("hashtags"):
+                output += f"*Hashtags:* {' '.join(t['hashtags'])}\n\n"
+            if t.get("conversation"):
+                output += f"*Conversation:* {t['conversation']}\n\n"
     else:
         for i, r in enumerate(top_results, 1):
             output += f"**{i}. {r['title']}**\n\n"
