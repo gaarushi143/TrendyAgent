@@ -58,6 +58,13 @@ def enrich_trend(trend: dict) -> dict:
         resp3 = {}
     event_results = clean_results(resp3.get("news", []))
 
+    # Search 4: Influencer/creator discovery
+    try:
+        resp4 = call_serper(SERPER_SEARCH_URL, f'"{title}" influencer OR creator OR tiktoker OR youtuber')
+    except requests.exceptions.RequestException:
+        resp4 = {}
+    influencer_results = clean_results(resp4.get("organic", []))
+
     # Google Trends: related queries and interest data
     related = get_related_queries(title)
     interest = get_interest_over_time(title)
@@ -65,6 +72,7 @@ def enrich_trend(trend: dict) -> dict:
     results_text = _format_results(core_results, "Core context")
     results_text += _format_results(social_results, "Social conversation")
     results_text += _format_results(event_results, "Background / triggering events")
+    results_text += _format_results(influencer_results, "Influencers / creators driving this trend")
 
     # Add Google Trends data
     results_text += "\n--- Google Trends Data ---\n"
@@ -92,7 +100,9 @@ Respond with ONLY a JSON object (no markdown, no code fences) in this exact form
     "hashtags": ["#Hashtag1", "#Hashtag2"],
     "key_phrases": ["phrase one", "phrase two"],
     "triggering_events": "1-2 sentences about what specific event(s) sparked this trend",
-    "trajectory": "rising | peaking | fading — pick one, then a 1-sentence explanation"
+    "trajectory": "rising | peaking | fading — pick one, then a 1-sentence explanation",
+    "key_voices": ["Name or handle of creators/influencers driving this trend"],
+    "competitor_angle": "1-2 sentences on what brands or competitors are already saying about this trend, or 'No competitor activity found' if none"
 }
 
 Rules:
@@ -103,6 +113,11 @@ Rules:
 - trajectory: Use the Google Trends interest data (rising/stable/declining,
   peak vs current scores) as your primary signal. Supplement with language
   from the articles. This should be data-driven, not a guess.
+- key_voices: 2-5 creators, influencers, or public figures who are actively
+  driving or amplifying this trend. Pull from the influencer/creator search results.
+  Only include names you actually found in the results — don't guess.
+- competitor_angle: What other brands are doing with this trend, if anything.
+  Pull from the search results. If no brand activity is found, say so.
 - If the results don't give you enough info for a field, say so honestly."""
 
     user_message = f"""Trend: {title}
@@ -137,4 +152,6 @@ Synthesize these into a trend brief. Respond with JSON only."""
             "key_phrases": [],
             "triggering_events": "Unknown",
             "trajectory": "Unknown",
+            "key_voices": [],
+            "competitor_angle": "Unknown",
         }

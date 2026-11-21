@@ -32,7 +32,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from tools.enrich import enrich_trend
-from tools.search import search_trending
+from tools.search import search_trending, search_trending_agentic
 from tools.writer import filter_trends, write_posts, review_posts, rewrite_post, split_posts, replace_post
 
 # Load environment variables from .env file (API keys live here)
@@ -127,14 +127,16 @@ def main():
     niche = args.niche
     if niche:
         print(f"\n🔍 Searching for trending topics in: {niche}...")
+        results, search_metadata = search_trending_agentic(niche, brand_guidelines)
     else:
         print(f"\n🔍 Searching for today's top trending topics...")
-    results = search_trending(niche)
+        results = search_trending(niche)
+        search_metadata = {}
     if not results:
         print("No trending topics found. Try a different niche.")
         sys.exit(1)
     top_results = results[:10]
-    print(f"   Found {len(results)} results. Top 10 trending topics:\n")
+    print(f"\n   Found {len(results)} results. Top 10 trending topics:\n")
     for i, r in enumerate(top_results, 1):
         print(f"   {i}. {r['title']}")
         print(f"      Source: {r['source']}")
@@ -153,6 +155,10 @@ def main():
     print(f'   Trajectory: {trend.get("trajectory", "N/A")}')
     if trend.get("hashtags"):
         print(f'   Hashtags: {" ".join(trend["hashtags"][:5])}')
+    if trend.get("key_voices"):
+        print(f'   Key voices: {", ".join(trend["key_voices"][:5])}')
+    if trend.get("competitor_angle"):
+        print(f'   Competitor angle: {trend["competitor_angle"]}')
 
     # --- Step 7: Generate social media posts with Claude ---
     print(f"\n✍️  Drafting social media posts...")
@@ -205,6 +211,10 @@ def main():
     output += f'**Trajectory:** {trend.get("trajectory", "N/A")}\n\n'
     output += f'**Key Phrases:** {", ".join(trend.get("key_phrases", []))}\n\n'
     output += f'**Related Hashtags:** {" ".join(trend.get("hashtags", []))}\n\n'
+    if trend.get("key_voices"):
+        output += f'**Key Voices:** {", ".join(trend.get("key_voices", []))}\n\n'
+    if trend.get("competitor_angle"):
+        output += f'**Competitor Angle:** {trend.get("competitor_angle", "N/A")}\n\n'
 
     # Quality review scores
     if final_review:
