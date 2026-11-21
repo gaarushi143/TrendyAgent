@@ -295,6 +295,7 @@ textarea.field { resize: vertical; min-height: 60px; line-height: 1.5; }
   background: linear-gradient(135deg, var(--violet-light) 0%, var(--yellow-soft) 100%);
   border: 1px solid var(--violet);
   border-radius: var(--radius); padding: 0.85rem 1rem; margin-top: 0.75rem;
+  margin-bottom: 2rem;
 }
 .pick-reason-head { font-size: 0.78rem; font-weight: 700; color: var(--violet-text); margin-bottom: 0.3rem; }
 .pick-reason-text { font-size: 0.75rem; color: var(--text-2); line-height: 1.55; }
@@ -682,6 +683,11 @@ async function loadFile(name) {
   } catch(e) {}
 }
 
+let pendingStage = null;
+let stageTimer = null;
+let lastDataAt = 0;
+const STAGE_DWELL_MS = 2500;
+
 function showStage(stage) {
   if (stage !== 'input' && stage !== activeStage && !completedStages.has(stage)) return;
   document.querySelectorAll('.stage').forEach(s => s.classList.remove('visible'));
@@ -692,6 +698,51 @@ function showStage(stage) {
     if (t.dataset.stage === stage) t.classList.add('active');
   });
   activeStage = stage;
+  lastDataAt = Date.now();
+}
+
+function stageDataArrived() {
+  lastDataAt = Date.now();
+  if (pendingStage && stageTimer) {
+    clearTimeout(stageTimer);
+    stageTimer = setTimeout(() => {
+      stageTimer = null;
+      if (pendingStage) {
+        completedStages.add(pendingStage);
+        showStage(pendingStage);
+        pendingStage = null;
+      }
+    }, STAGE_DWELL_MS);
+  }
+}
+
+function queueStage(stage) {
+  if (stageTimer) { clearTimeout(stageTimer); stageTimer = null; }
+  if (activeStage === 'input') {
+    completedStages.add(stage);
+    showStage(stage);
+    pendingStage = null;
+    return;
+  }
+  pendingStage = stage;
+  stageTimer = setTimeout(() => {
+    stageTimer = null;
+    if (pendingStage) {
+      completedStages.add(pendingStage);
+      showStage(pendingStage);
+      pendingStage = null;
+    }
+  }, STAGE_DWELL_MS);
+}
+
+function flushPendingStage() {
+  if (pendingStage && stageTimer) {
+    clearTimeout(stageTimer);
+    stageTimer = null;
+    completedStages.add(pendingStage);
+    showStage(pendingStage);
+    pendingStage = null;
+  }
 }
 
 function updateStepBar(currentStep) {
@@ -723,6 +774,8 @@ function runAgent() {
   btn.classList.add('running'); btn.disabled = true;
   apiCalls = 0;
   completedStages = new Set();
+  lastDataAt = 0; pendingStage = null;
+  if (stageTimer) { clearTimeout(stageTimer); stageTimer = null; }
   agentData = { trends: [], selected: null, enrichment: null, posts: '', review: null };
   // Reset stage content
   document.getElementById('search-strategy-body').innerHTML = '<div class="info-line"><span class="dot"></span><span>Analyzing brand guidelines...</span></div>';
@@ -742,8 +795,7 @@ function runAgent() {
   evtSource.addEventListener('step', e => {
     const d = JSON.parse(e.data);
     updateStepBar(d.step);
-    completedStages.add(d.step);
-    showStage(d.step);
+    queueStage(d.step);
   });
 
   evtSource.addEventListener('log', e => {
@@ -764,6 +816,7 @@ function runAgent() {
     html += `<div class="info-line"><span class="dot" style="background:var(--yellow)"></span><span><strong>Region:</strong> ${esc((d.geography||'us').toUpperCase())}</span></div>`;
     html += `<div class="info-line"><span class="dot" style="background:var(--green)"></span><span><strong>Planned queries:</strong> ${d.query_count}</span></div>`;
     document.getElementById('search-strategy-body').innerHTML = html;
+    stageDataArrived();
   });
 
   evtSource.addEventListener('queries', e => {
@@ -778,6 +831,7 @@ function runAgent() {
       html += `<div class="info-line"><span class="dot" style="background:${color}"></span><span><span class="val">${esc(q.query)}</span> <span class="badge" style="font-size:0.6rem;padding:1px 6px;background:${color};color:#fff">${esc(label)}</span></span></div>`;
     });
     document.getElementById('search-queries-body').innerHTML = html;
+    stageDataArrived();
   });
 
   evtSource.addEventListener('verified', e => {
@@ -790,6 +844,7 @@ function runAgent() {
       html += `<div class="info-line"><span class="dot" style="background:${i===0?'var(--yellow)':'var(--green)'}"></span><span><span class="val">${esc(v.name)}</span> <span style="color:var(--text-3);font-size:0.68rem">— ${v.sources} source${v.sources!==1?'s':''}</span></span></div>`;
     });
     document.getElementById('search-results-body').innerHTML = html;
+    stageDataArrived();
   });
 
   evtSource.addEventListener('trends', e => {
@@ -801,6 +856,7 @@ function runAgent() {
     if (card.style.display === '' && document.getElementById('search-results-body').children.length > 0) {
       const badge = document.getElementById('results-count-badge');
       badge.textContent += ` · ${trends.length} raw`;
+      stageDataArrived();
       return;
     }
     card.style.display = '';
@@ -812,6 +868,7 @@ function runAgent() {
     });
     if (trends.length > 6) html += `<div class="expand-toggle" onclick="document.querySelectorAll('[data-extra-result]').forEach(e=>e.style.display='');this.style.display='none'" style="font-size:0.72rem;color:var(--violet);padding:0.3rem 0 0 1.2rem;cursor:pointer">+${trends.length - 6} more — show all</div>`;
     document.getElementById('search-results-body').innerHTML = html;
+    stageDataArrived();
   });
 
   evtSource.addEventListener('selected', e => {
@@ -847,6 +904,7 @@ function runAgent() {
       reason.style.display = '';
       reason.innerHTML = `<div class="pick-reason"><div class="pick-reason-head">💡 Why this trend?</div><div class="pick-reason-text">${esc(d.reasoning)}</div></div>`;
     }
+    stageDataArrived();
   });
 
   evtSource.addEventListener('enrichment', e => {
@@ -870,12 +928,14 @@ function runAgent() {
     `;
     document.getElementById('write-brief-bar').innerHTML = briefHTML;
     document.getElementById('review-brief-bar').innerHTML = briefHTML;
+    stageDataArrived();
   });
 
   evtSource.addEventListener('posts', e => {
     const d = JSON.parse(e.data);
     agentData.posts = d.markdown;
     apiCalls++;
+    stageDataArrived();
   });
 
   evtSource.addEventListener('review', e => {
@@ -883,6 +943,7 @@ function runAgent() {
     agentData.review = d.scores;
     apiCalls++;
     renderReviewPosts(agentData.posts, d.scores);
+    stageDataArrived();
   });
 
   evtSource.addEventListener('rewrite', e => {
@@ -892,6 +953,7 @@ function runAgent() {
   evtSource.addEventListener('complete', e => {
     const d = JSON.parse(e.data);
     currentOutput = d.output; currentFilename = d.filename;
+    flushPendingStage();
     completedStages.add('done');
     updateStepBar('done');
     showStage('done');
