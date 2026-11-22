@@ -129,7 +129,7 @@ Synthesize these into a trend brief. Respond with JSON only."""
 
     response = get_client().messages.create(
         model=MODEL,
-        max_tokens=1024,
+        max_tokens=2048,
         system=system_prompt,
         messages=[{"role": "user", "content": user_message}],
     )

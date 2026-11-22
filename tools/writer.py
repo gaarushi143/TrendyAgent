@@ -352,7 +352,7 @@ Score each post. Respond with JSON only."""
 
     response = get_client().messages.create(
         model=MODEL,
-        max_tokens=1024,
+        max_tokens=2048,
         system=system_prompt,
         messages=[{"role": "user", "content": user_message}],
     )
@@ -361,9 +361,11 @@ Score each post. Respond with JSON only."""
 
     stripped = response_text.strip()
     if stripped.startswith("```"):
-        lines = stripped.split("\n")
-        lines = [l for l in lines if not l.strip().startswith("```")]
-        stripped = "\n".join(lines)
+        first_newline = stripped.index("\n")
+        stripped = stripped[first_newline + 1:]
+    if stripped.endswith("```"):
+        stripped = stripped[: stripped.rfind("```")]
+    stripped = stripped.strip()
 
     try:
         return json.loads(stripped)

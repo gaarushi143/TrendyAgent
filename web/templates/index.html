@@ -310,23 +310,10 @@ textarea.field { resize: vertical; min-height: 60px; line-height: 1.5; }
 .enrich-val { font-size: 0.78rem; color: var(--text); line-height: 1.5; }
 .enrich-full { grid-column: 1 / -1; }
 
-/* ── Search stats ── */
-.search-hero { text-align: center; padding: 1.5rem 0 1rem; }
+/* ── Search stage ── */
+.search-hero { text-align: center; padding: 1.5rem 0 0.5rem; }
 .search-status {
   font-size: 0.88rem; font-weight: 700; color: var(--text);
-  margin-bottom: 1.2rem;
-}
-.search-stats {
-  display: flex; justify-content: center; gap: 2rem;
-}
-.stat-box { text-align: center; }
-.stat-num {
-  font-size: 1.8rem; font-weight: 800; color: var(--violet);
-  font-family: var(--mono); line-height: 1.1;
-}
-.stat-label {
-  font-size: 0.62rem; font-weight: 600; color: var(--text-3);
-  text-transform: uppercase; letter-spacing: 0.04em; margin-top: 0.2rem;
 }
 .pick-tooltip {
   max-height: 0; overflow: hidden; opacity: 0;
@@ -343,12 +330,15 @@ textarea.field { resize: vertical; min-height: 60px; line-height: 1.5; }
   margin-bottom: 0.2rem;
 }
 .pick-tooltip-text { font-size: 0.75rem; color: var(--text-2); line-height: 1.55; }
-.other-trends-label {
-  font-size: 0.68rem; font-weight: 700; color: var(--text-3);
-  text-transform: uppercase; letter-spacing: 0.04em;
-  margin: 1rem 0 0.5rem;
+.toggle-trends-btn {
+  display: block; width: 100%; margin-top: 0.75rem;
+  padding: 0.5rem; border-radius: var(--radius);
+  border: 1px dashed var(--border); background: var(--white);
+  font-size: 0.72rem; font-weight: 600; color: var(--text-3);
+  cursor: pointer; font-family: var(--sans); transition: all 0.15s;
 }
-#search-other-trends { max-height: 280px; overflow-y: auto; }
+.toggle-trends-btn:hover { border-color: var(--violet); color: var(--violet-text); }
+#search-other-trends { max-height: 280px; overflow-y: auto; margin-top: 0.5rem; }
 
 /* ── Review stage ── */
 .review-header {
@@ -421,6 +411,13 @@ textarea.field { resize: vertical; min-height: 60px; line-height: 1.5; }
 .pc-detail-scores span {
   padding: 0.1rem 0.35rem; border-radius: 4px; background: var(--bg);
 }
+.pc-edit-area {
+  width: 100%; min-height: 140px; font-family: var(--sans);
+  font-size: 0.8rem; color: var(--text); line-height: 1.65;
+  border: 1.5px solid var(--violet); border-radius: 6px;
+  padding: 0.75rem; resize: vertical; outline: none;
+  background: var(--violet-light);
+}
 
 /* ── Bottom bar ── */
 .bottom-bar {
@@ -462,29 +459,6 @@ textarea.field { resize: vertical; min-height: 60px; line-height: 1.5; }
 .output-preview th { background: var(--bg); padding: 0.3rem 0.5rem; text-align: left; font-weight: 600; color: var(--text-2); border: 1px solid var(--border); }
 .output-preview td { padding: 0.3rem 0.5rem; border: 1px solid var(--border); }
 
-/* ── Feedback bar ── */
-.feedback-bar {
-  position: fixed; bottom: 0; left: 0; right: 0;
-  background: var(--white); border-top: 1px solid var(--border);
-  padding: 0.5rem 1.5rem; display: none; align-items: center; gap: 0.5rem;
-  z-index: 10;
-}
-.feedback-bar.visible { display: flex; }
-.feedback-label { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-3); flex-shrink: 0; }
-.feedback-input {
-  flex: 1; font-family: var(--sans); font-size: 0.78rem;
-  padding: 0.3rem 0.6rem; border-radius: var(--radius);
-  border: 1px solid var(--border); background: var(--bg);
-  color: var(--text); outline: none;
-}
-.feedback-input::placeholder { color: var(--text-3); }
-.feedback-input:focus { border-color: var(--violet); }
-.btn-send {
-  font-family: var(--sans); font-size: 0.72rem; font-weight: 600;
-  padding: 0.3rem 0.7rem; border-radius: 6px; border: 1px solid var(--border);
-  background: var(--white); color: var(--text-2); cursor: pointer;
-}
-.btn-send:hover { border-color: var(--violet); color: var(--violet-text); }
 
 /* ── Misc ── */
 .hidden { display: none !important; }
@@ -592,20 +566,6 @@ textarea.field { resize: vertical; min-height: 60px; line-height: 1.5; }
   <div class="stage" id="stage-searching">
     <div class="search-hero fade-in">
       <div class="search-status" id="search-status">Scanning sources...</div>
-      <div class="search-stats" id="search-stats">
-        <div class="stat-box">
-          <div class="stat-num" id="stat-sources">—</div>
-          <div class="stat-label">sources scanned</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-num" id="stat-articles">—</div>
-          <div class="stat-label">articles found</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-num" id="stat-verified">—</div>
-          <div class="stat-label">trends verified</div>
-        </div>
-      </div>
     </div>
     <div class="card fade-in" id="search-insights" style="display:none">
       <div class="card-head">
@@ -616,7 +576,8 @@ textarea.field { resize: vertical; min-height: 60px; line-height: 1.5; }
     </div>
     <div id="search-trends" style="display:none" class="fade-in">
       <div id="search-picked-trend"></div>
-      <div id="search-other-trends"></div>
+      <button class="toggle-trends-btn" id="toggle-trends-btn" style="display:none" onclick="toggleOtherTrends()"></button>
+      <div id="search-other-trends" style="display:none"></div>
     </div>
   </div>
 
@@ -652,11 +613,6 @@ textarea.field { resize: vertical; min-height: 60px; line-height: 1.5; }
 
 </div>
 
-<div class="feedback-bar" id="feedback-bar">
-  <span class="feedback-label">Feedback</span>
-  <input class="feedback-input" type="text" id="feedback-input" placeholder="Tell the agent what to improve next time...">
-  <button class="btn-send" id="btn-send" onclick="sendFeedback()">Send</button>
-</div>
 
 <script>
 let evtSource = null, currentOutput = '', currentFilename = '';
@@ -714,7 +670,6 @@ async function loadFile(name) {
     showStage('done');
     document.getElementById('done-summary').textContent = name;
     document.getElementById('done-preview').innerHTML = marked.parse(currentOutput);
-    document.getElementById('feedback-bar').classList.add('visible');
   } catch(e) {}
 }
 
@@ -815,9 +770,6 @@ function runAgent() {
   agentData = { trends: [], selected: null, enrichment: null, posts: '', review: null };
   // Reset stage content
   document.getElementById('search-status').textContent = 'Scanning sources...';
-  document.getElementById('stat-sources').textContent = '—';
-  document.getElementById('stat-articles').textContent = '—';
-  document.getElementById('stat-verified').textContent = '—';
   document.getElementById('search-insights').style.display = 'none';
   document.getElementById('search-insights-body').innerHTML = '';
   document.getElementById('search-plan-badge').textContent = 'scanning...';
@@ -825,6 +777,8 @@ function runAgent() {
   document.getElementById('search-trends').style.display = 'none';
   document.getElementById('search-picked-trend').innerHTML = '';
   document.getElementById('search-other-trends').innerHTML = '';
+  document.getElementById('search-other-trends').style.display = 'none';
+  document.getElementById('toggle-trends-btn').style.display = 'none';
   document.getElementById('enrich-data').style.display = 'none';
   document.getElementById('review-posts-list').innerHTML = '';
 
@@ -855,7 +809,6 @@ function runAgent() {
   evtSource.addEventListener('strategy', e => {
     const d = JSON.parse(e.data);
     apiCalls++;
-    document.getElementById('stat-sources').textContent = d.query_count;
     document.getElementById('search-status').textContent = `Scanning ${d.query_count} sources across the web...`;
     document.getElementById('search-plan-badge').textContent = 'live';
     document.getElementById('search-plan-badge').className = 'badge badge-green';
@@ -871,7 +824,7 @@ function runAgent() {
   evtSource.addEventListener('queries', e => {
     const queries = JSON.parse(e.data);
     const sources = new Set(queries.map(q => q.endpoint || q.source || 'web'));
-    document.getElementById('stat-sources').textContent = queries.length;
+    document.getElementById('search-status').textContent = `Searching ${queries.length} queries...`;
     const existing = document.getElementById('search-insights-body').innerHTML;
     const sourceLabels = { google_trends: 'Google Trends', news: 'News', search: 'Web search', producthunt: 'Product Hunt' };
     const sourceList = [...sources].map(s => sourceLabels[s] || s).join(', ');
@@ -882,9 +835,8 @@ function runAgent() {
 
   evtSource.addEventListener('verified', e => {
     const verified = JSON.parse(e.data);
-    document.getElementById('stat-verified').textContent = verified.length;
-    document.getElementById('search-status').textContent = `Found ${verified.length} verified trends`;
     const totalSources = verified.reduce((s, v) => s + (v.sources || 1), 0);
+    document.getElementById('search-status').textContent = `Verified ${verified.length} trends from ${totalSources} sources`;
     const existing = document.getElementById('search-insights-body').innerHTML;
     document.getElementById('search-insights-body').innerHTML = existing +
       `<div class="info-line"><span class="dot" style="background:var(--green)"></span><span><strong>Cross-referenced:</strong> ${totalSources} sources across ${verified.length} trends</span></div>`;
@@ -895,7 +847,7 @@ function runAgent() {
     const trends = JSON.parse(e.data);
     agentData.trends = trends;
     apiCalls += 3;
-    document.getElementById('stat-articles').textContent = trends.length;
+    document.getElementById('search-status').textContent = `Analyzing ${trends.length} articles...`;
     stageDataArrived();
   });
 
@@ -918,11 +870,13 @@ function runAgent() {
       ${d.reasoning ? `<div class="pick-tooltip"><div class="pick-tooltip-label">Why this trend?</div><div class="pick-tooltip-text">${esc(d.reasoning)}</div></div>` : ''}
     </div>`;
     document.getElementById('search-picked-trend').innerHTML = pickedHtml;
-    // Other trends below
+    // Other trends behind toggle
     const others = topTrends.filter(t => t.name !== d.trend_title);
-    let othersHtml = '';
     if (others.length) {
-      othersHtml += `<div class="other-trends-label">${others.length} other trends</div>`;
+      const toggleBtn = document.getElementById('toggle-trends-btn');
+      toggleBtn.style.display = '';
+      toggleBtn.textContent = `Show ${others.length} other trends`;
+      let othersHtml = '';
       others.forEach((t, i) => {
         othersHtml += `<div class="trend-card" onclick="this.classList.toggle('expanded')">
           <div class="tc-top">
@@ -933,8 +887,9 @@ function runAgent() {
           <div class="tc-tags">${(t.hashtags||[]).slice(0,4).map(h=>`<span class="tc-tag">${esc(h)}</span>`).join('')}</div>
         </div>`;
       });
+      document.getElementById('search-other-trends').innerHTML = othersHtml;
+      document.getElementById('search-other-trends').style.display = 'none';
     }
-    document.getElementById('search-other-trends').innerHTML = othersHtml;
     stageDataArrived();
   });
 
@@ -989,7 +944,6 @@ function runAgent() {
     showStage('done');
     document.getElementById('done-summary').textContent = `${currentFilename} · ${apiCalls} API calls`;
     document.getElementById('done-preview').innerHTML = marked.parse(d.output);
-    document.getElementById('feedback-bar').classList.add('visible');
     done();
     loadFiles();
   });
@@ -1012,9 +966,9 @@ function renderReviewPosts(markdown, scores) {
   let posts = {};
   platforms.forEach(p => {
     const patterns = {
-      twitter: /## Twitter.*?\n([\s\S]*?)(?=\n## |\n---|\Z)/i,
-      linkedin: /## LinkedIn.*?\n([\s\S]*?)(?=\n## |\n---|\Z)/i,
-      instagram: /## Instagram.*?\n([\s\S]*?)(?=\n## |\n---|\Z)/i,
+      twitter: /## Twitter.*?\n([\s\S]*?)(?=\n## |\n---|$)/i,
+      linkedin: /## LinkedIn.*?\n([\s\S]*?)(?=\n## |\n---|$)/i,
+      instagram: /## Instagram.*?\n([\s\S]*?)(?=\n## |\n---|$)/i,
     };
     const m = markdown.match(patterns[p]);
     posts[p] = m ? m[1].trim() : '';
@@ -1042,6 +996,7 @@ function renderReviewPosts(markdown, scores) {
       <div class="pc-footer">
         <div class="pc-actions">
           <button class="pc-btn accent" onclick="copyText(this, '${p}')">Copy post</button>
+          <button class="pc-btn" onclick="editPost(this, '${p}')">Edit</button>
         </div>
         <div class="pc-detail-scores"><span>brand ${r.score_brand_alignment||'—'}</span><span>fit ${r.score_platform_fit||'—'}</span><span>auth ${r.score_authenticity||'—'}</span><span>trend ${r.score_trend_connection||'—'}</span></div>
       </div>
@@ -1052,11 +1007,67 @@ function renderReviewPosts(markdown, scores) {
 
 function copyText(btn, platform) {
   const card = btn.closest('.post-card');
-  const text = card.querySelector('.pc-body').textContent;
+  const body = card.querySelector('.pc-body');
+  const textarea = body.querySelector('.pc-edit-area');
+  const text = textarea ? textarea.value : body.textContent;
   navigator.clipboard.writeText(text).then(() => {
     btn.textContent = 'Copied!'; btn.style.color = 'var(--green)'; btn.style.borderColor = 'var(--green)';
-    setTimeout(() => { btn.textContent = 'Copy'; btn.style.color = ''; btn.style.borderColor = ''; }, 1500);
+    setTimeout(() => { btn.textContent = 'Copy post'; btn.style.color = ''; btn.style.borderColor = ''; }, 1500);
   });
+}
+
+function editPost(btn, platform) {
+  const card = btn.closest('.post-card');
+  const body = card.querySelector('.pc-body');
+  const text = body.textContent;
+  const ta = document.createElement('textarea');
+  ta.className = 'pc-edit-area';
+  ta.value = text;
+  body.textContent = '';
+  body.style.padding = '0.5rem';
+  body.appendChild(ta);
+  btn.textContent = 'Save';
+  btn.className = 'pc-btn accent';
+  btn.onclick = function() { savePost(this, platform); };
+}
+
+function savePost(btn, platform) {
+  const card = btn.closest('.post-card');
+  const ta = card.querySelector('.pc-edit-area');
+  const newText = ta.value;
+  const body = card.querySelector('.pc-body');
+  body.textContent = newText;
+  body.style.padding = '';
+  agentData.posts = replacePostInMarkdown(agentData.posts, platform, newText);
+  if (currentOutput && currentFilename) {
+    currentOutput = replacePostInMarkdown(currentOutput, platform, newText);
+    document.getElementById('done-preview').innerHTML = marked.parse(currentOutput);
+    fetch(`/api/output/${currentFilename}`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ content: currentOutput })
+    });
+  }
+  btn.textContent = 'Saved!';
+  btn.style.color = 'var(--green)'; btn.style.borderColor = 'var(--green)';
+  setTimeout(() => {
+    btn.textContent = 'Edit';
+    btn.className = 'pc-btn';
+    btn.style.color = ''; btn.style.borderColor = '';
+    btn.onclick = function() { editPost(this, platform); };
+  }, 1200);
+}
+
+function replacePostInMarkdown(md, platform, newContent) {
+  const headers = { twitter: '## Twitter/X Post', linkedin: '## LinkedIn Post', instagram: '## Instagram Caption' };
+  const header = headers[platform];
+  const idx = md.indexOf(header);
+  if (idx === -1) return md;
+  const after = idx + header.length;
+  const rest = md.substring(after);
+  const next = rest.search(/\n## |\n---/);
+  if (next === -1) return md.substring(0, after) + '\n\n' + newContent + '\n';
+  return md.substring(0, after) + '\n\n' + newContent + '\n' + rest.substring(next);
 }
 
 function done() {
@@ -1073,17 +1084,16 @@ function downloadOutput() {
   document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
 }
 
-async function sendFeedback() {
-  const inp = document.getElementById('feedback-input');
-  const text = inp.value.trim();
-  if (!text) return;
-  try {
-    await fetch('/api/feedback', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ feedback: text, output_file: currentFilename }) });
-    const btn = document.getElementById('btn-send');
-    btn.textContent = 'Sent!'; btn.style.color = 'var(--green)'; btn.style.borderColor = 'var(--green)';
-    inp.value = '';
-    setTimeout(() => { btn.textContent = 'Send'; btn.style.color = ''; btn.style.borderColor = ''; }, 1500);
-  } catch(e) {}
+function toggleOtherTrends() {
+  const el = document.getElementById('search-other-trends');
+  const btn = document.getElementById('toggle-trends-btn');
+  if (el.style.display === 'none') {
+    el.style.display = '';
+    btn.textContent = btn.textContent.replace('Show', 'Hide');
+  } else {
+    el.style.display = 'none';
+    btn.textContent = btn.textContent.replace('Hide', 'Show');
+  }
 }
 
 function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
