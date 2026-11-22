@@ -39,12 +39,19 @@ def _format_results(results):
     """Format search results into a numbered list for the prompt."""
     text = ""
     for i, r in enumerate(results, 1):
+        score_info = ""
+        if r.get("trend_score"):
+            score_info = f"\n  TrendScore: {r['trend_score']}"
+        if r.get("query_hit_count", 1) > 1:
+            score_info += f" | Cross-query hits: {r['query_hit_count']}"
+        if r.get("hours_old") and r["hours_old"] < 72:
+            score_info += f" | Age: {r['hours_old']}h"
         text += f"""
 Result {i}:
   Title: {r.get('title', '')}
   Snippet: {r.get('snippet', '')}
   Source: {r.get('source', '')}
-  Link: {r.get('link', '')}
+  Link: {r.get('link', '')}{score_info}
 """
     return text
 
@@ -113,6 +120,9 @@ Respond with ONLY a JSON object (no markdown, no code fences):
 Rules:
 - Extract up to 10 DISTINCT trends. Fewer is fine if there aren't 10 real trends.
 - Rank by how strongly they're trending (most momentum first)
+- Results include a TrendScore (higher = more trending), cross-query hit counts,
+  and age in hours. Use these as signals — a high TrendScore or many cross-query
+  hits means the topic appeared in multiple independent searches.
 - Merge duplicate/overlapping trends into one entry
 - Skip generic evergreen content that isn't actually trending
 - Skip sponsored content and SEO filler

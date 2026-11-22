@@ -211,7 +211,9 @@ def run_agent():
                 return
             top_results = results[:10]
             yield _sse("trends", [
-                {"title": r["title"], "source": r["source"], "snippet": r["snippet"], "link": r["link"]}
+                {"title": r["title"], "source": r["source"], "snippet": r["snippet"],
+                 "link": r["link"], "trend_score": r.get("trend_score", 0),
+                 "query_hit_count": r.get("query_hit_count", 1)}
                 for r in top_results
             ])
             yield _sse("log", {"message": f"Found {len(results)} results", "type": "info"})
