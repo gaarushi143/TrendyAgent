@@ -83,14 +83,6 @@ body { font-family: var(--sans); background: var(--bg); color: var(--text); min-
   content: ''; position: absolute; bottom: -1px; left: 0; right: 0;
   height: 2px; background: var(--violet); border-radius: 1px;
 }
-.step-tab .spinner {
-  display: none; width: 10px; height: 10px;
-  border: 1.5px solid var(--border); border-top-color: var(--violet);
-  border-radius: 50%; animation: sp 0.6s linear infinite;
-  margin-right: 0.3rem; vertical-align: -1px;
-}
-.step-tab.active .spinner { display: inline-block; }
-@keyframes sp { to { transform: rotate(360deg); } }
 
 .step-sep {
   font-size: 0.65rem; color: var(--border); margin: 0 0.1rem;
@@ -493,11 +485,11 @@ textarea.field { resize: vertical; min-height: 60px; line-height: 1.5; }
 <div class="steps" id="steps-bar">
   <button class="step-tab active" data-stage="input" onclick="showStage('input')">Start</button>
   <span class="step-sep">/</span>
-  <button class="step-tab" data-stage="searching" onclick="showStage('searching')"><span class="spinner"></span>Search</button>
+  <button class="step-tab" data-stage="searching" onclick="showStage('searching')">Search</button>
   <span class="step-sep">/</span>
-  <button class="step-tab" data-stage="enriching" onclick="showStage('enriching')"><span class="spinner"></span>Enrich</button>
+  <button class="step-tab" data-stage="enriching" onclick="showStage('enriching')">Enrich</button>
   <span class="step-sep">/</span>
-  <button class="step-tab" data-stage="reviewing" onclick="showStage('reviewing')"><span class="spinner"></span>Review</button>
+  <button class="step-tab" data-stage="reviewing" onclick="showStage('reviewing')">Review</button>
   <span class="step-sep">/</span>
   <button class="step-tab" data-stage="done" onclick="showStage('done')">Done</button>
 </div>
