@@ -310,7 +310,32 @@ textarea.field { resize: vertical; min-height: 60px; line-height: 1.5; }
 .enrich-val { font-size: 0.78rem; color: var(--text); line-height: 1.5; }
 .enrich-full { grid-column: 1 / -1; }
 
-/* ── Write + Review stage ── */
+/* ── Search stats ── */
+.search-hero { text-align: center; padding: 1.5rem 0 1rem; }
+.search-status {
+  font-size: 0.88rem; font-weight: 700; color: var(--text);
+  margin-bottom: 1.2rem;
+}
+.search-stats {
+  display: flex; justify-content: center; gap: 2rem;
+}
+.stat-box { text-align: center; }
+.stat-num {
+  font-size: 1.8rem; font-weight: 800; color: var(--violet);
+  font-family: var(--mono); line-height: 1.1;
+}
+.stat-label {
+  font-size: 0.62rem; font-weight: 600; color: var(--text-3);
+  text-transform: uppercase; letter-spacing: 0.04em; margin-top: 0.2rem;
+}
+
+/* ── Review stage ── */
+.review-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.review-title { font-size: 0.88rem; font-weight: 800; color: var(--text); }
+.review-subtitle { font-size: 0.72rem; color: var(--text-3); }
 .brief-bar {
   display: flex; gap: 0.4rem; margin-bottom: 1rem;
   overflow-x: auto; padding-bottom: 0.25rem;
@@ -353,15 +378,8 @@ textarea.field { resize: vertical; min-height: 60px; line-height: 1.5; }
 .pc-pass-badge.fail { background: var(--red-bg); color: var(--red); }
 .pc-body {
   padding: 1rem; font-size: 0.8rem; color: var(--text-2);
-  line-height: 1.65; max-height: 120px; overflow: hidden; position: relative;
-  white-space: pre-wrap;
+  line-height: 1.65; white-space: pre-wrap;
 }
-.pc-body::after {
-  content: ''; position: absolute; bottom: 0; left: 0; right: 0;
-  height: 40px; background: linear-gradient(transparent, var(--white));
-}
-.pc-body.expanded { max-height: none; }
-.pc-body.expanded::after { display: none; }
 .pc-footer {
   display: flex; align-items: center; justify-content: space-between;
   padding: 0.5rem 1rem; border-top: 1px solid var(--border);
@@ -486,8 +504,6 @@ textarea.field { resize: vertical; min-height: 60px; line-height: 1.5; }
   <span class="step-sep">/</span>
   <button class="step-tab" data-stage="enriching" onclick="showStage('enriching')"><span class="spinner"></span>Enrich</button>
   <span class="step-sep">/</span>
-  <button class="step-tab" data-stage="writing" onclick="showStage('writing')"><span class="spinner"></span>Write</button>
-  <span class="step-sep">/</span>
   <button class="step-tab" data-stage="reviewing" onclick="showStage('reviewing')"><span class="spinner"></span>Review</button>
   <span class="step-sep">/</span>
   <button class="step-tab" data-stage="done" onclick="showStage('done')">Done</button>
@@ -555,27 +571,29 @@ textarea.field { resize: vertical; min-height: 60px; line-height: 1.5; }
 
   <!-- ── SEARCH ── -->
   <div class="stage" id="stage-searching">
-    <div class="card fade-in" id="search-strategy">
-      <div class="card-head">
-        <span class="card-title"><span class="icon">🎯</span> Strategy</span>
-        <span class="badge badge-violet" id="search-plan-badge">planning...</span>
-      </div>
-      <div id="search-strategy-body">
-        <div class="info-line"><span class="dot"></span><span>Analyzing brand guidelines...</span></div>
+    <div class="search-hero fade-in">
+      <div class="search-status" id="search-status">Scanning sources...</div>
+      <div class="search-stats" id="search-stats">
+        <div class="stat-box">
+          <div class="stat-num" id="stat-sources">—</div>
+          <div class="stat-label">sources scanned</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" id="stat-articles">—</div>
+          <div class="stat-label">articles found</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" id="stat-verified">—</div>
+          <div class="stat-label">trends verified</div>
+        </div>
       </div>
     </div>
-    <div class="card fade-in" id="search-queries" style="display:none">
+    <div class="card fade-in" id="search-insights" style="display:none">
       <div class="card-head">
-        <span class="card-title"><span class="icon">🔍</span> Queries</span>
+        <span class="card-title"><span class="icon">🎯</span> Search insights</span>
+        <span class="badge badge-green" id="search-plan-badge">scanning...</span>
       </div>
-      <div id="search-queries-body"></div>
-    </div>
-    <div class="card fade-in" id="search-results-card" style="display:none">
-      <div class="card-head">
-        <span class="card-title"><span class="icon">📡</span> Results</span>
-        <span class="badge badge-green" id="results-count-badge"></span>
-      </div>
-      <div id="search-results-body"></div>
+      <div id="search-insights-body"></div>
     </div>
   </div>
 
@@ -601,21 +619,8 @@ textarea.field { resize: vertical; min-height: 60px; line-height: 1.5; }
     <div id="enrich-data" style="display:none"></div>
   </div>
 
-  <!-- ── WRITE ── -->
-  <div class="stage" id="stage-writing">
-    <div class="brief-bar" id="write-brief-bar"></div>
-    <div class="card">
-      <div class="card-head">
-        <span class="card-title"><span class="icon">✍️</span> Drafting posts</span>
-        <span class="badge badge-violet">writing...</span>
-      </div>
-      <div class="info-line"><span class="dot"></span><span>Generating posts for Twitter/X, LinkedIn, and Instagram...</span></div>
-    </div>
-  </div>
-
   <!-- ── REVIEW ── -->
   <div class="stage" id="stage-reviewing">
-    <div class="brief-bar" id="review-brief-bar"></div>
     <div id="review-posts-list"></div>
   </div>
 
@@ -691,7 +696,7 @@ async function loadFile(name) {
   try {
     const d = await (await fetch(`/api/output/${name}`)).json();
     currentOutput = d.content; currentFilename = name;
-    completedStages = new Set(['input','searching','filtering','enriching','writing','reviewing','done']);
+    completedStages = new Set(['input','searching','filtering','enriching','reviewing','done']);
     updateStepBar('done');
     showStage('done');
     document.getElementById('done-summary').textContent = name;
@@ -763,7 +768,7 @@ function flushPendingStage() {
 }
 
 function updateStepBar(currentStep) {
-  const order = ['input','searching','filtering','enriching','writing','reviewing','done'];
+  const order = ['input','searching','filtering','enriching','reviewing','done'];
   const idx = order.indexOf(currentStep);
   document.querySelectorAll('.step-tab').forEach(tab => {
     const tabIdx = order.indexOf(tab.dataset.stage);
@@ -796,9 +801,14 @@ function runAgent() {
   if (stageTimer) { clearTimeout(stageTimer); stageTimer = null; }
   agentData = { trends: [], selected: null, enrichment: null, posts: '', review: null };
   // Reset stage content
-  document.getElementById('search-strategy-body').innerHTML = '<div class="info-line"><span class="dot"></span><span>Analyzing brand guidelines...</span></div>';
-  document.getElementById('search-queries').style.display = 'none';
-  document.getElementById('search-results-card').style.display = 'none';
+  document.getElementById('search-status').textContent = 'Scanning sources...';
+  document.getElementById('stat-sources').textContent = '—';
+  document.getElementById('stat-articles').textContent = '—';
+  document.getElementById('stat-verified').textContent = '—';
+  document.getElementById('search-insights').style.display = 'none';
+  document.getElementById('search-insights-body').innerHTML = '';
+  document.getElementById('search-plan-badge').textContent = 'scanning...';
+  document.getElementById('search-plan-badge').className = 'badge badge-violet';
   document.getElementById('filter-trends-list').innerHTML = '';
   document.getElementById('filter-pick-reason').style.display = 'none';
   document.getElementById('enrich-data').style.display = 'none';
@@ -812,8 +822,10 @@ function runAgent() {
 
   evtSource.addEventListener('step', e => {
     const d = JSON.parse(e.data);
-    updateStepBar(d.step);
-    queueStage(d.step);
+    const step = d.step === 'writing' ? 'reviewing' : d.step;
+    if (step === 'saving') return;
+    updateStepBar(step);
+    queueStage(step);
   });
 
   evtSource.addEventListener('log', e => {
@@ -827,41 +839,39 @@ function runAgent() {
   evtSource.addEventListener('strategy', e => {
     const d = JSON.parse(e.data);
     apiCalls++;
-    document.getElementById('search-plan-badge').textContent = `${d.query_count} queries`;
+    document.getElementById('stat-sources').textContent = d.query_count;
+    document.getElementById('search-status').textContent = `Scanning ${d.query_count} sources across the web...`;
+    document.getElementById('search-plan-badge').textContent = 'live';
     document.getElementById('search-plan-badge').className = 'badge badge-green';
+    const card = document.getElementById('search-insights');
+    card.style.display = '';
     let html = '';
     if (d.audience) html += `<div class="info-line"><span class="dot" style="background:var(--violet)"></span><span><strong>Audience:</strong> ${esc(d.audience)}</span></div>`;
     html += `<div class="info-line"><span class="dot" style="background:var(--yellow)"></span><span><strong>Region:</strong> ${esc((d.geography||'us').toUpperCase())}</span></div>`;
-    html += `<div class="info-line"><span class="dot" style="background:var(--green)"></span><span><strong>Planned queries:</strong> ${d.query_count}</span></div>`;
-    document.getElementById('search-strategy-body').innerHTML = html;
+    document.getElementById('search-insights-body').innerHTML = html;
     stageDataArrived();
   });
 
   evtSource.addEventListener('queries', e => {
     const queries = JSON.parse(e.data);
-    const card = document.getElementById('search-queries');
-    card.style.display = '';
-    const srcColors = { google_trends: 'var(--green)', news: 'var(--red)', search: 'var(--violet)', producthunt: 'var(--yellow)' };
-    let html = '';
-    queries.forEach(q => {
-      const color = srcColors[q.endpoint] || srcColors[q.source] || 'var(--text-3)';
-      const label = q.endpoint || q.source || 'web';
-      html += `<div class="info-line"><span class="dot" style="background:${color}"></span><span><span class="val">${esc(q.query)}</span> <span class="badge" style="font-size:0.6rem;padding:1px 6px;background:${color};color:#fff">${esc(label)}</span></span></div>`;
-    });
-    document.getElementById('search-queries-body').innerHTML = html;
+    const sources = new Set(queries.map(q => q.endpoint || q.source || 'web'));
+    document.getElementById('stat-sources').textContent = queries.length;
+    const existing = document.getElementById('search-insights-body').innerHTML;
+    const sourceLabels = { google_trends: 'Google Trends', news: 'News', search: 'Web search', producthunt: 'Product Hunt' };
+    const sourceList = [...sources].map(s => sourceLabels[s] || s).join(', ');
+    document.getElementById('search-insights-body').innerHTML = existing +
+      `<div class="info-line"><span class="dot" style="background:var(--green)"></span><span><strong>Channels:</strong> ${esc(sourceList)}</span></div>`;
     stageDataArrived();
   });
 
   evtSource.addEventListener('verified', e => {
     const verified = JSON.parse(e.data);
-    const card = document.getElementById('search-results-card');
-    card.style.display = '';
-    document.getElementById('results-count-badge').textContent = `${verified.length} verified`;
-    let html = '';
-    verified.forEach((v, i) => {
-      html += `<div class="info-line"><span class="dot" style="background:${i===0?'var(--yellow)':'var(--green)'}"></span><span><span class="val">${esc(v.name)}</span> <span style="color:var(--text-3);font-size:0.68rem">— ${v.sources} source${v.sources!==1?'s':''}</span></span></div>`;
-    });
-    document.getElementById('search-results-body').innerHTML = html;
+    document.getElementById('stat-verified').textContent = verified.length;
+    document.getElementById('search-status').textContent = `Found ${verified.length} verified trends`;
+    const totalSources = verified.reduce((s, v) => s + (v.sources || 1), 0);
+    const existing = document.getElementById('search-insights-body').innerHTML;
+    document.getElementById('search-insights-body').innerHTML = existing +
+      `<div class="info-line"><span class="dot" style="background:var(--green)"></span><span><strong>Cross-referenced:</strong> ${totalSources} sources across ${verified.length} trends</span></div>`;
     stageDataArrived();
   });
 
@@ -869,23 +879,7 @@ function runAgent() {
     const trends = JSON.parse(e.data);
     agentData.trends = trends;
     apiCalls += 3;
-    const card = document.getElementById('search-results-card');
-    // If verified trends already populated the card, append raw count
-    if (card.style.display === '' && document.getElementById('search-results-body').children.length > 0) {
-      const badge = document.getElementById('results-count-badge');
-      badge.textContent += ` · ${trends.length} raw`;
-      stageDataArrived();
-      return;
-    }
-    card.style.display = '';
-    document.getElementById('results-count-badge').textContent = `${trends.length} found`;
-    let html = '';
-    trends.forEach((t, i) => {
-      const hidden = i >= 6 ? ' style="display:none" data-extra-result' : '';
-      html += `<div class="info-line"${hidden}><span class="dot" style="background:${i===0?'var(--yellow)':'var(--violet)'}"></span><span><span class="val">${esc(t.title)}</span> <span style="color:var(--text-3);font-size:0.68rem">— ${esc(t.source)}</span></span></div>`;
-    });
-    if (trends.length > 6) html += `<div class="expand-toggle" onclick="document.querySelectorAll('[data-extra-result]').forEach(e=>e.style.display='');this.style.display='none'" style="font-size:0.72rem;color:var(--violet);padding:0.3rem 0 0 1.2rem;cursor:pointer">+${trends.length - 6} more — show all</div>`;
-    document.getElementById('search-results-body').innerHTML = html;
+    document.getElementById('stat-articles').textContent = trends.length;
     stageDataArrived();
   });
 
@@ -944,8 +938,7 @@ function runAgent() {
       <div class="brief-chip">🧭 <span class="bv">${esc(d.trajectory||'—')}</span></div>
       ${(d.hashtags||[]).length?`<div class="brief-chip"># <span class="bv">${(d.hashtags||[]).slice(0,3).join(' ')}</span></div>`:''}
     `;
-    document.getElementById('write-brief-bar').innerHTML = briefHTML;
-    document.getElementById('review-brief-bar').innerHTML = briefHTML;
+    agentData.briefHTML = briefHTML;
     stageDataArrived();
   });
 
@@ -997,7 +990,6 @@ function renderReviewPosts(markdown, scores) {
   const labels = { twitter: 'Twitter / X', linkedin: 'LinkedIn', instagram: 'Instagram' };
   const icons = { twitter: 'plat-twitter', linkedin: 'plat-linkedin', instagram: 'plat-instagram' };
   const initials = { twitter: '𝕏', linkedin: 'in', instagram: 'ig' };
-  // Rough split by platform headers
   let posts = {};
   platforms.forEach(p => {
     const patterns = {
@@ -1009,30 +1001,30 @@ function renderReviewPosts(markdown, scores) {
     posts[p] = m ? m[1].trim() : '';
   });
 
-  let html = '';
+  const allPass = platforms.every(p => (scores[p]||{}).pass !== false);
+  let html = `<div class="review-header"><div>
+    <div class="review-title">${allPass ? 'All posts passed review' : 'Quality review'}</div>
+    <div class="review-subtitle">${agentData.selected?.trend_title || ''}</div>
+  </div></div>`;
+
   platforms.forEach(p => {
     const r = scores[p] || {};
     const overall = r.overall || '—';
     const pass = r.pass !== false;
-    const ba = r.score_brand_alignment || '—';
-    const pf = r.score_platform_fit || '—';
-    const au = r.score_authenticity || '—';
-    const tc = r.score_trend_connection || '—';
     html += `<div class="post-card fade-in">
       <div class="pc-header">
         <span class="pc-platform"><span class="plat-icon ${icons[p]}">${initials[p]}</span>${labels[p]}</span>
         <div class="pc-scores">
-          <div class="pc-detail-scores"><span>brand ${ba}</span><span>fit ${pf}</span><span>auth ${au}</span><span>trend ${tc}</span></div>
-          <span class="pc-score-num ${pass?'pass':'fail'}">${overall}</span>
+          <span class="pc-score-num ${pass?'pass':'fail'}">${overall}/10</span>
           <span class="pc-pass-badge ${pass?'pass':'fail'}">${pass?'pass':'fail'}</span>
         </div>
       </div>
-      <div class="pc-body" onclick="this.classList.toggle('expanded')">${esc(posts[p])}</div>
+      <div class="pc-body">${esc(posts[p])}</div>
       <div class="pc-footer">
         <div class="pc-actions">
-          <button class="pc-btn" onclick="copyText(this, '${p}')">Copy</button>
-          <button class="pc-btn" onclick="expandPost(this)">Expand</button>
+          <button class="pc-btn accent" onclick="copyText(this, '${p}')">Copy post</button>
         </div>
+        <div class="pc-detail-scores"><span>brand ${r.score_brand_alignment||'—'}</span><span>fit ${r.score_platform_fit||'—'}</span><span>auth ${r.score_authenticity||'—'}</span><span>trend ${r.score_trend_connection||'—'}</span></div>
       </div>
     </div>`;
   });
@@ -1046,12 +1038,6 @@ function copyText(btn, platform) {
     btn.textContent = 'Copied!'; btn.style.color = 'var(--green)'; btn.style.borderColor = 'var(--green)';
     setTimeout(() => { btn.textContent = 'Copy'; btn.style.color = ''; btn.style.borderColor = ''; }, 1500);
   });
-}
-
-function expandPost(btn) {
-  const body = btn.closest('.post-card').querySelector('.pc-body');
-  body.classList.toggle('expanded');
-  btn.textContent = body.classList.contains('expanded') ? 'Collapse' : 'Expand';
 }
 
 function done() {
