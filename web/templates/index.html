@@ -328,6 +328,27 @@ textarea.field { resize: vertical; min-height: 60px; line-height: 1.5; }
   font-size: 0.62rem; font-weight: 600; color: var(--text-3);
   text-transform: uppercase; letter-spacing: 0.04em; margin-top: 0.2rem;
 }
+.pick-tooltip {
+  max-height: 0; overflow: hidden; opacity: 0;
+  transition: max-height 0.3s ease, opacity 0.2s ease, margin 0.3s ease, padding 0.3s ease;
+  background: linear-gradient(135deg, var(--violet-light) 0%, var(--yellow-soft) 100%);
+  border-radius: 6px;
+}
+.trend-card.picked:hover .pick-tooltip {
+  max-height: 200px; opacity: 1;
+  margin-top: 0.5rem; padding: 0.6rem 0.8rem;
+}
+.pick-tooltip-label {
+  font-size: 0.68rem; font-weight: 700; color: var(--violet-text);
+  margin-bottom: 0.2rem;
+}
+.pick-tooltip-text { font-size: 0.75rem; color: var(--text-2); line-height: 1.55; }
+.other-trends-label {
+  font-size: 0.68rem; font-weight: 700; color: var(--text-3);
+  text-transform: uppercase; letter-spacing: 0.04em;
+  margin: 1rem 0 0.5rem;
+}
+#search-other-trends { max-height: 280px; overflow-y: auto; }
 
 /* ── Review stage ── */
 .review-header {
@@ -500,8 +521,6 @@ textarea.field { resize: vertical; min-height: 60px; line-height: 1.5; }
   <span class="step-sep">/</span>
   <button class="step-tab" data-stage="searching" onclick="showStage('searching')"><span class="spinner"></span>Search</button>
   <span class="step-sep">/</span>
-  <button class="step-tab" data-stage="filtering" onclick="showStage('filtering')"><span class="spinner"></span>Filter</button>
-  <span class="step-sep">/</span>
   <button class="step-tab" data-stage="enriching" onclick="showStage('enriching')"><span class="spinner"></span>Enrich</button>
   <span class="step-sep">/</span>
   <button class="step-tab" data-stage="reviewing" onclick="showStage('reviewing')"><span class="spinner"></span>Review</button>
@@ -595,16 +614,10 @@ textarea.field { resize: vertical; min-height: 60px; line-height: 1.5; }
       </div>
       <div id="search-insights-body"></div>
     </div>
-  </div>
-
-  <!-- ── FILTER ── -->
-  <div class="stage" id="stage-filtering">
-    <div class="section-head">
-      <span class="section-title" id="filter-title">Clustering trends...</span>
-      <span class="section-sub">click to expand</span>
+    <div id="search-trends" style="display:none" class="fade-in">
+      <div id="search-picked-trend"></div>
+      <div id="search-other-trends"></div>
     </div>
-    <div id="filter-trends-list"></div>
-    <div id="filter-pick-reason" style="display:none"></div>
   </div>
 
   <!-- ── ENRICH ── -->
@@ -696,7 +709,7 @@ async function loadFile(name) {
   try {
     const d = await (await fetch(`/api/output/${name}`)).json();
     currentOutput = d.content; currentFilename = name;
-    completedStages = new Set(['input','searching','filtering','enriching','reviewing','done']);
+    completedStages = new Set(['input','searching','enriching','reviewing','done']);
     updateStepBar('done');
     showStage('done');
     document.getElementById('done-summary').textContent = name;
@@ -768,7 +781,7 @@ function flushPendingStage() {
 }
 
 function updateStepBar(currentStep) {
-  const order = ['input','searching','filtering','enriching','reviewing','done'];
+  const order = ['input','searching','enriching','reviewing','done'];
   const idx = order.indexOf(currentStep);
   document.querySelectorAll('.step-tab').forEach(tab => {
     const tabIdx = order.indexOf(tab.dataset.stage);
@@ -809,8 +822,9 @@ function runAgent() {
   document.getElementById('search-insights-body').innerHTML = '';
   document.getElementById('search-plan-badge').textContent = 'scanning...';
   document.getElementById('search-plan-badge').className = 'badge badge-violet';
-  document.getElementById('filter-trends-list').innerHTML = '';
-  document.getElementById('filter-pick-reason').style.display = 'none';
+  document.getElementById('search-trends').style.display = 'none';
+  document.getElementById('search-picked-trend').innerHTML = '';
+  document.getElementById('search-other-trends').innerHTML = '';
   document.getElementById('enrich-data').style.display = 'none';
   document.getElementById('review-posts-list').innerHTML = '';
 
@@ -822,7 +836,9 @@ function runAgent() {
 
   evtSource.addEventListener('step', e => {
     const d = JSON.parse(e.data);
-    const step = d.step === 'writing' ? 'reviewing' : d.step;
+    let step = d.step;
+    if (step === 'writing') step = 'reviewing';
+    if (step === 'filtering') step = 'searching';
     if (step === 'saving') return;
     updateStepBar(step);
     queueStage(step);
@@ -887,35 +903,38 @@ function runAgent() {
     const d = JSON.parse(e.data);
     agentData.selected = d;
     apiCalls++;
-    // Build filter view
-    const title = document.getElementById('filter-title');
     const topTrends = d.top_trends || [];
-    if (topTrends.length) {
-      title.textContent = `${topTrends.length} trends found`;
-      let html = '';
-      topTrends.forEach((t, i) => {
-        const isPicked = t.name === d.trend_title;
-        html += `<div class="trend-card${isPicked?' picked':''}" onclick="this.classList.toggle('expanded')">
+    document.getElementById('search-trends').style.display = '';
+    document.getElementById('search-status').textContent = `${topTrends.length || 1} trends clustered`;
+    // Picked trend at top
+    const pickedTrend = topTrends.find(t => t.name === d.trend_title) || {};
+    let pickedHtml = `<div class="trend-card picked">
+      <div class="tc-top">
+        <span class="tc-pick-badge">★ brand pick</span>
+        <span class="tc-name">${esc(d.trend_title)}</span>
+      </div>
+      <div class="tc-core">${esc(d.trend_summary || pickedTrend.context || '')}</div>
+      <div class="tc-tags">${(pickedTrend.hashtags||[]).slice(0,4).map(h=>`<span class="tc-tag">${esc(h)}</span>`).join('')}</div>
+      ${d.reasoning ? `<div class="pick-tooltip"><div class="pick-tooltip-label">Why this trend?</div><div class="pick-tooltip-text">${esc(d.reasoning)}</div></div>` : ''}
+    </div>`;
+    document.getElementById('search-picked-trend').innerHTML = pickedHtml;
+    // Other trends below
+    const others = topTrends.filter(t => t.name !== d.trend_title);
+    let othersHtml = '';
+    if (others.length) {
+      othersHtml += `<div class="other-trends-label">${others.length} other trends</div>`;
+      others.forEach((t, i) => {
+        othersHtml += `<div class="trend-card" onclick="this.classList.toggle('expanded')">
           <div class="tc-top">
-            <span class="tc-rank">${String(i+1).padStart(2,'0')}</span>
+            <span class="tc-rank">${String(i+2).padStart(2,'0')}</span>
             <span class="tc-name">${esc(t.name)}</span>
-            ${isPicked?'<span class="tc-pick-badge">★ brand pick</span>':''}
           </div>
           <div class="tc-core">${esc(t.context||'')}</div>
           <div class="tc-tags">${(t.hashtags||[]).slice(0,4).map(h=>`<span class="tc-tag">${esc(h)}</span>`).join('')}</div>
         </div>`;
       });
-      document.getElementById('filter-trends-list').innerHTML = html;
-    } else {
-      title.textContent = 'Trend selected';
-      document.getElementById('filter-trends-list').innerHTML = `<div class="card"><div class="card-head"><span class="card-title">${esc(d.trend_title)}</span></div><div class="info-line"><span class="dot"></span><span>${esc(d.trend_summary)}</span></div></div>`;
     }
-    // Reasoning
-    if (d.reasoning) {
-      const reason = document.getElementById('filter-pick-reason');
-      reason.style.display = '';
-      reason.innerHTML = `<div class="pick-reason"><div class="pick-reason-head">💡 Why this trend?</div><div class="pick-reason-text">${esc(d.reasoning)}</div></div>`;
-    }
+    document.getElementById('search-other-trends').innerHTML = othersHtml;
     stageDataArrived();
   });
 
