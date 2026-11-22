@@ -508,7 +508,24 @@ textarea.field { resize: vertical; min-height: 60px; line-height: 1.5; }
         <input class="field" type="text" id="url-input" placeholder="https://yourbrand.com">
       </div>
       <textarea class="field" id="context-input" rows="3" placeholder="Tell us about the brand — tone, audience, what to avoid... (optional)"></textarea>
-      <input class="field" type="text" id="niche-input" placeholder="Or type a custom niche...">
+      <div class="field-row">
+        <input class="field" type="text" id="niche-input" placeholder="Or type a custom niche...">
+        <select class="field" id="geo-input" style="max-width:180px">
+          <option value="">Region (auto)</option>
+          <option value="us">United States</option>
+          <option value="gb">United Kingdom</option>
+          <option value="in">India</option>
+          <option value="ca">Canada</option>
+          <option value="au">Australia</option>
+          <option value="de">Germany</option>
+          <option value="fr">France</option>
+          <option value="br">Brazil</option>
+          <option value="jp">Japan</option>
+          <option value="sg">Singapore</option>
+          <option value="ae">UAE</option>
+          <option value="za">South Africa</option>
+        </select>
+      </div>
     </div>
     <div class="divider-line"><hr><span>pick a lane</span><hr></div>
     <div class="niche-grid" id="niche-grid">
@@ -761,6 +778,7 @@ function runAgent() {
   const niche = document.getElementById('niche-input').value;
   const url = document.getElementById('url-input').value.trim();
   const context = document.getElementById('context-input').value.trim();
+  const geo = document.getElementById('geo-input').value;
   document.getElementById('brand-input').classList.remove('invalid');
   document.getElementById('url-input').classList.remove('invalid');
   document.getElementById('context-input').classList.remove('invalid');
@@ -787,9 +805,9 @@ function runAgent() {
   document.getElementById('review-posts-list').innerHTML = '';
 
   const meta = document.getElementById('topbar-meta');
-  meta.innerHTML = `<span class="dot"></span> ${brand || url || 'Custom brand'} · ${niche || 'General'}`;
+  meta.innerHTML = `<span class="dot"></span> ${brand || url || 'Custom brand'} · ${niche || 'General'}${geo ? ' · ' + geo.toUpperCase() : ''}`;
 
-  const p = new URLSearchParams({ brand, niche, brand_url: url, brand_context: context });
+  const p = new URLSearchParams({ brand, niche, brand_url: url, brand_context: context, geo });
   evtSource = new EventSource(`/api/run?${p}`);
 
   evtSource.addEventListener('step', e => {

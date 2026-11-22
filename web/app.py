@@ -122,6 +122,7 @@ def run_agent():
     brand_file = request.args.get("brand_file", "")
     brand_url = request.args.get("brand_url", "").strip()
     brand_context = request.args.get("brand_context", "").strip()
+    geo = request.args.get("geo", "").strip()
 
     @stream_with_context
     def generate():
@@ -165,6 +166,17 @@ def run_agent():
                     "Keep posts professional, positive, and on-brand. "
                     "Avoid controversial or divisive topics.\n"
                 )
+
+            if geo:
+                geo_names = {
+                    "us": "United States", "gb": "United Kingdom", "in": "India",
+                    "ca": "Canada", "au": "Australia", "de": "Germany",
+                    "fr": "France", "br": "Brazil", "jp": "Japan",
+                    "sg": "Singapore", "ae": "UAE", "za": "South Africa",
+                }
+                geo_label = geo_names.get(geo, geo.upper())
+                brand_guidelines += f"\n**Target Geography:** {geo_label} ({geo.upper()})\n"
+                yield _sse("log", {"message": f"Region: {geo_label}", "type": "success"})
 
             niche_val = niche if niche else None
             niche_label = niche or "General"
